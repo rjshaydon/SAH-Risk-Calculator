@@ -13,15 +13,12 @@
       box-shadow: 0 0 8px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
-      margin: 0 auto; /* ensure centered */
-      position: relative;
+      margin: 0 auto;
     }
     header {
       position: fixed;
       top: 0;
-      /* center header to match #app width */
-      left: 50%;
-      transform: translateX(-50%);
+      left: 50%; transform: translateX(-50%);
       width: 360px;
       z-index: 20;
       text-align: center;
@@ -29,57 +26,36 @@
       background: #2a4a7b;
       color: #fff;
     }
-    header h1 {
-      margin: 0;
-      /* increased vertical padding for slightly larger height */
-      padding: 0.4rem 0;
-    }
+    header h1 { margin: 0; padding: 0.4rem 0; }
     main {
       flex: 1;
-      display: flex;
-      flex-direction: column;
+      /* push content below fixed header + fixed 30vh nomogram */
+      margin-top: calc(30vh + 2.4rem + 1rem);
       padding: 0.5rem;
-      padding-top: calc(30vh + 2rem + 1.5rem); /* increased extra gap to 1.5rem */ /* canvas height + header height + gap */
       overflow-y: auto;
     }
     #canvas-container {
-      width: 350px; /* reduced width from 360px to 350px (10px narrower) */
-      z-index: 10;
-      height: 30vh;
+      width: 360px; height: 30vh;
       background: #f4f7fa;
       border-radius: 8px;
-      margin: 0;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-      position: fixed;
-      top: 3.5rem;
-      left: 50%;
-      transform: translateX(-50%);
+      margin: 0 auto 1rem;
+      border: 1px solid rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+      position: fixed; top: 2.4rem;
+      left: 50%; transform: translateX(-50%);
       box-sizing: border-box;
-      /* enable pseudo-element positioning */
-      position: fixed;
-      overflow: visible;
     }
-    /* semi-transparent white padding below nomogram */
-    
-    }
-    canvas { width: 100%; height: 100%; touch-action: none; }
-    .findings {
-    margin-top: 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem; /* reduced gap between sections by 0.5rem */
-  }
-    fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; }
-    legend { padding: 0 0.5rem; font-weight: bold; }
-    fieldset label { display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 0.25rem; justify-content: space-between; }
-    fieldset select { width: 100px; padding: 0.2rem; font-size: 0.85rem; }
-    .controls { display: grid; grid-template-columns: 1fr 100px; align-items: center; margin-top: 1rem; padding: 0 0.5rem; }
-    .controls + fieldset { margin-top: 1rem; }
-    /* spacing between option and LP */
-    fieldset + fieldset { margin-top: 1rem; }
-    .controls strong { font-size: 0.9rem; justify-self: start; }
-    .controls .value { font-size: 1rem; justify-self: center; }
+    canvas { width:100%; height:100%; }
+    .findings { display: flex; flex-direction: column; gap: 0.5rem; }
+    fieldset { border:1px solid #ccc; border-radius:4px; padding:0.5rem; }
+    legend { padding:0 0.5rem; font-weight:bold; }
+    fieldset label { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem; font-size:0.85rem; }
+    fieldset select { width:100px; padding:0.2rem; font-size:0.85rem; }
+    .controls { display:grid; grid-template-columns:1fr 100px; align-items:center; margin-top:1rem; padding:0 0.5rem; }
+    .controls + fieldset { margin-top:1rem; }
+    fieldset + fieldset { margin-top:1rem; }
+    .controls strong { font-size:0.9rem; justify-self:start; }
+    .controls .value { font-size:1rem; justify-self:center; }
   </style>
 </head>
 <body>
@@ -88,97 +64,149 @@
     <main>
       <div id="canvas-container"><canvas id="faganCanvas"></canvas></div>
       <div class="findings">
-        <!-- History -->
         <fieldset>
           <legend>History</legend>
-          <label>Worst headache <select class="finding" data-key="Worst headache"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-          <label>Thunderclap <select class="finding" data-key="Thunderclap"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-          <label>Exertion at onset <select class="finding" data-key="Exertion at onset"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Loss of consciousness <select class="finding" data-key="Loss of consciousness"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Blurred vision <select class="finding" data-key="Blurred vision"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Awoke from sleep <select class="finding" data-key="Awoke from sleep"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Onset during intercourse <select class="finding" data-key="Onset during intercourse"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Nausea <select class="finding" data-key="Nausea"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
+          <label>Worst headache<select class="finding" data-key="Worst headache"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
+          <label>Thunderclap<select class="finding" data-key="Thunderclap"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
+          <label>Exertion at onset<select class="finding" data-key="Exertion at onset"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Loss of consciousness<select class="finding" data-key="Loss of consciousness"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Blurred vision<select class="finding" data-key="Blurred vision"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Awoke from sleep<select class="finding" data-key="Awoke from sleep"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Onset during intercourse<select class="finding" data-key="Onset during intercourse"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Nausea<select class="finding" data-key="Nausea"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
         </fieldset>
-        <!-- Examination -->
         <fieldset>
           <legend>Examination</legend>
-          <label>Neck stiffness (subjective) <select class="finding" data-key="Neck stiffness (subjective)"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-          <label>Meningism <select class="finding" data-key="Meningism"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Vomiting <select class="finding" data-key="Vomiting"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Unable to walk <select class="finding" data-key="Unable to walk"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Altered mental status <select class="finding" data-key="Altered mental status"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Focal neuro deficit <select class="finding" data-key="Focal neuro deficit"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Neck stiffness (subjective)<select class="finding" data-key="Neck stiffness (subjective)"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
+          <label>Meningism<select class="finding" data-key="Meningism"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Vomiting<select class="finding" data-key="Vomiting"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Unable to walk<select class="finding" data-key="Unable to walk"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Altered mental status<select class="finding" data-key="Altered mental status"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+          <label>Focal neuro deficit<select class="finding" data-key="Focal neuro deficit"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
         </fieldset>
       </div>
-      <!-- Pre-test -->
       <div class="controls">
-        <strong>Pre-test Probability:</strong><span class="value" id="pretest-output-text">10.4%</span>
+        <strong>Pre-test Probability:</strong><span class="value" id="pretest-output-text">--</span>
       </div>
-      <!-- Time to CT -->
       <div class="controls">
-        <strong>Time to CT:</strong><select id="presentation-time"><option value="<6 hrs" selected>&lt;6 hrs</option><option value="6-12 hrs">6–12 hrs</option><option value="12-24 hrs">12–24 hrs</option><option value="24-48 hrs">24–48 hrs</option><option value="48-72 hrs">48–72 hrs</option><option value="72-96 hrs">72–96 hrs</option></select>
+        <strong>Time to CT:</strong><select id="presentation-time"><option value="<6 hrs">&lt;6 hrs</option><option value="6-12 hrs">6–12 hrs</option><option value="12-24 hrs">12–24 hrs</option><option value="24-48 hrs">24–48 hrs</option><option value="48-72 hrs">48–72 hrs</option><option value="72-96 hrs">72–96 hrs</option></select>
       </div>
-      <!-- Post-test -->
       <div class="controls">
         <strong>Post-test Probability:</strong><span class="value" id="posttest-prob-text">--</span>
       </div>
-      <!-- Options -->
       <fieldset>
         <legend>Options</legend>
-        <label>Aneurysmal SAH only <input type="checkbox" id="asah-only" /></label>
-        <label>Adjust for delay to presentation <input type="checkbox" id="adjust-delay" /></label>
-        <label>Maximally conservative <input type="checkbox" id="max-conservative" checked /></label>
+        <label>Aneurysmal SAH only<input type="checkbox" id="asah-only" /></label>
+        <label>Adjust for delay to presentation<input type="checkbox" id="adjust-delay" /></label>
+        <label>Maximally conservative<input type="checkbox" id="max-conservative" checked /></label>
       </fieldset>
-      <!-- Lumbar Puncture -->
       <fieldset>
         <legend>Lumbar Puncture</legend>
-        <label>UK Spectro xanthochromia <select id="lp-spectro" data-key="UK Spectro xanthochromia"><option value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-        <label>CSF RBC >1000 (x10^6) <select id="lp-rbc" data-key="CSF RBC >1000 (x10^6)"><option value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-        <label>Visual xanthochromia <select id="lp-visual" data-key="Visual xanthochromia"><option value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+        <label>UK Spectro xanthochromia<select id="lp-spectro" data-key="UK Spectro xanthochromia"><option value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+        <label>CSF RBC >1000 (x10^6)<select id="lp-rbc" data-key="CSF RBC >1000 (x10^6)"><option value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+        <label>Visual xanthochromia<select id="lp-visual" data-key="Visual xanthochromia"><option value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
       </fieldset>
-      <!-- Post-LP -->
-      <div class="controls" id="postlp-control" style="display:none; margin-bottom: 1rem;"><strong>Post-LP Probability:</strong><span class="value" id="postlp-text">--</span></div>
+      <div class="controls" id="postlp-control" style="display:none; margin-bottom:1rem;"><strong>Post-LP Probability:</strong><span class="value" id="postlp-text">--</span></div>
     </main>
     <script>
-      const canvas = document.getElementById('faganCanvas'), ctx = canvas.getContext('2d');
-      function resize(){const r=canvas.getBoundingClientRect();canvas.width=r.width*(devicePixelRatio||1);canvas.height=r.height*(devicePixelRatio||1);ctx.scale(devicePixelRatio||1,devicePixelRatio||1);}window.addEventListener('resize',resize);
-      document.addEventListener('DOMContentLoaded',()=>{resize();const baselineP=7.5;
-        const clinicalLRs={'Worst headache':{yes:1.25,no:0.24},'Thunderclap':{yes:1.34,no:0.74},'Exertion at onset':{yes:1.70,no:0.88},'Loss of consciousness':{yes:1.87,no:0.91},'Blurred vision':{yes:3.14,no:0.85},'Awoke from sleep':{yes:0.63,no:1.09},'Onset during intercourse':{yes:1.20,no:1.00},'Nausea':{yes:1.15,no:0.74},'Neck stiffness (subjective)':{yes:4.12,no:0.73},'Meningism':{yes:6.59,no:0.78},'Vomiting':{yes:1.92,no:0.52},'Unable to walk':{yes:2.36,no:0.85},'Altered mental status':{yes:2.18,no:0.87},'Focal neuro deficit':{yes:3.26,no:0.81}};
-        const preOutputText=document.getElementById('pretest-output-text'),postOutputText=document.getElementById('posttest-prob-text');
-        const timeSelect=document.getElementById('presentation-time'),optAsah=document.getElementById('asah-only'),optCons=document.getElementById('max-conservative'),optDelay=document.getElementById('adjust-delay');
-        const lpSpectro=document.getElementById('lp-spectro'),lpRbc=document.getElementById('lp-rbc'),lpVisual=document.getElementById('lp-visual');
-        const postLpControl=document.getElementById('postlp-control'),postLpText=document.getElementById('postlp-text');
-        const lpLR={'UK Spectro xanthochromia':{positive:15.2,negative:0.1},'CSF RBC >1000 (x10^6)':{positive:5.7,negative:0.2},'Visual xanthochromia':{positive:12.6,negative:0.3}};
-        const timeSens={'<6 hrs':{sah:[1.00,0.983],asah:[1.00,0.98]},'6-12 hrs':{sah:[0.992,0.972],asah:[1.00,0.982]},'12-24 hrs':{sah:[0.993,0.975],asah:[1.00,0.983]},'24-48 hrs':{sah:[0.990,0.971],asah:[0.996,0.976]},'48-72 hrs':{sah:[0.990,0.972],asah:[0.996,0.976]},'72-96 hrs':{sah:[0.978,0.955],asah:[0.987,0.964]}};
-        const timeOdds={'<6 hrs':{sah:2.074,asah:2.667},'6-12 hrs':{sah:0.482,asah:0.375},'12-24 hrs':{sah:0.282,asah:0.252},'24-48 hrs':{sah:0.153,asah:0.155},'48-72 hrs':{sah:0.107,asah:0.105},'72-96 hrs':{sah:0.081,asah:0.095}};
-        function recalc(){
-          let odds=baselineP/(100-baselineP),postOdds=null;
-          document.querySelectorAll('.finding').forEach(sel=>{const k=sel.dataset.key,v=sel.value,lr=v==='yes'?clinicalLRs[k].yes:v==='no'?clinicalLRs[k].no:1;odds*=lr;});
-          preOutputText.textContent=((odds/(1+odds))*100).toFixed(1)+'%';
-          const t=timeSelect.value,branch=optAsah.checked?'asah':'sah';
-          if(optDelay.checked)odds*=timeOdds[t][branch];
-          const pair=timeSens[t][branch],sensitivity=optCons.checked?pair[1]:pair[0];
-          if(sensitivity===1){postOutputText.textContent=(optAsah.checked?'aSAH':'SAH')+' excluded';}
-          else{postOdds=odds*(1-sensitivity);const pp=(postOdds/(1+postOdds))*100;if(pp<1)postOutputText.textContent='~1 in '+Math.round(1/(pp/100)).toLocaleString();else postOutputText.textContent=pp.toFixed(1)+'%';}
-          let combineLp=1,anyLp=false;[lpSpectro,lpRbc,lpVisual].forEach(el=>{const v=el.value,k=el.dataset.key;if(v==='positive'||v==='negative'){anyLp=true;combineLp*=lpLR[k][v];}});
-          if(anyLp && postOdds != null) {
+      const canvas = document.getElementById('faganCanvas');
+      const ctx = canvas.getContext('2d');
+      function resize() {
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * (window.devicePixelRatio || 1);
+        canvas.height = rect.height * (window.devicePixelRatio || 1);
+        ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+      }
+      window.addEventListener('resize', resize);
+      document.addEventListener('DOMContentLoaded', () => {
+        resize();
+        const baselineP = 7.5;
+        const clinicalLRs = {
+          'Worst headache': { yes: 1.25, no: 0.24 },
+          'Thunderclap': { yes: 1.34, no: 0.74 },
+          'Exertion at onset': { yes: 1.70, no: 0.88 },
+          'Loss of consciousness': { yes: 1.87, no: 0.91 },
+          'Blurred vision': { yes: 3.14, no: 0.85 },
+          'Awoke from sleep': { yes: 0.63, no: 1.09 },
+          'Onset during intercourse': { yes: 1.20, no: 1.00 },
+          'Nausea': { yes: 1.15, no: 0.74 },
+          'Neck stiffness (subjective)': { yes: 4.12, no: 0.73 },
+          'Meningism': { yes: 6.59, no: 0.78 },
+          'Vomiting': { yes: 1.92, no: 0.52 },
+          'Unable to walk': { yes: 2.36, no: 0.85 },
+          'Altered mental status': { yes: 2.18, no: 0.87 },
+          'Focal neuro deficit': { yes: 3.26, no: 0.81 }
+        };
+        const timeSens = {
+          '<6 hrs':    { sah: [1.00, 0.983],  asah: [1.00, 0.98]  },
+          '6-12 hrs':  { sah: [0.992, 0.972], asah: [1.00, 0.982] },
+          '12-24 hrs': { sah: [0.993, 0.975], asah: [1.00, 0.983] },
+          '24-48 hrs': { sah: [0.990, 0.971], asah: [0.996, 0.976] },
+          '48-72 hrs': { sah: [0.990, 0.972], asah: [0.996, 0.976] },
+          '72-96 hrs': { sah: [0.978, 0.955], asah: [0.987, 0.964] }
+        };
+        const timeOdds = {
+          '<6 hrs':    { sah: 2.074, asah: 2.667 },
+          '6-12 hrs':  { sah: 0.482, asah: 0.375 },
+          '12-24 hrs': { sah: 0.282, asah: 0.252 },
+          '24-48 hrs': { sah: 0.153, asah: 0.155 },
+          '48-72 hrs': { sah: 0.107, asah: 0.105 },
+          '72-96 hrs': { sah: 0.081, asah: 0.095 }
+        };
+        const lpLR = {
+          'UK Spectro xanthochromia': { positive: 15.2, negative: 0.1 },
+          'CSF RBC >1000 (x10^6)':     { positive: 5.7, negative: 0.2 },
+          'Visual xanthochromia':      { positive: 12.6, negative: 0.3 }
+        };
+        const preOutputText = document.getElementById('pretest-output-text');
+        const postOutputText = document.getElementById('posttest-prob-text');
+        const timeSelect = document.getElementById('presentation-time');
+        const optAsah = document.getElementById('asah-only');
+        const optCons = document.getElementById('max-conservative');
+        const optDelay = document.getElementById('adjust-delay');
+        const lpSpectro = document.getElementById('lp-spectro');
+        const lpRbc = document.getElementById('lp-rbc');
+        const lpVisual = document.getElementById('lp-visual');
+        const postLpControl = document.getElementById('postlp-control');
+        const postLpText = document.getElementById('postlp-text');
+        function recalc() {
+          let odds = baselineP / (100 - baselineP);
+          let postOdds = null;
+          document.querySelectorAll('.finding').forEach(sel => {
+            const lr = sel.value === 'yes' ? clinicalLRs[sel.dataset.key].yes : sel.value === 'no' ? clinicalLRs[sel.dataset.key].no : 1.0;
+            odds *= lr;
+          });
+          const preProb = (odds / (1 + odds)) * 100;
+          preOutputText.textContent = preProb.toFixed(1) + '%';
+          const branch = optAsah.checked ? 'asah' : 'sah';
+          if (optDelay.checked) odds *= timeOdds[timeSelect.value][branch];
+          const pair = timeSens[timeSelect.value][branch];
+          const sensitivity = optCons.checked ? pair[1] : pair[0];
+          if (sensitivity === 1) postOutputText.textContent = (optAsah.checked ? 'aSAH' : 'SAH') + ' excluded';
+          else {
+            postOdds = odds * (1 - sensitivity);
+            const pp = (postOdds / (1 + postOdds)) * 100;
+            postOutputText.textContent = pp < 1 ? `~1 in ${Math.round(1 / (pp / 100)).toLocaleString()}` : pp.toFixed(1) + '%';
+          }
+          let combineLp = 1.0, anyLp = false;
+          [lpSpectro, lpRbc, lpVisual].forEach(el => {
+            if (el.value === 'positive' || el.value === 'negative') {
+              anyLp = true;
+              combineLp *= lpLR[el.dataset.key][el.value];
+            }
+          });
+          if (anyLp && postOdds !== null) {
             postLpControl.style.display = '';
-            // Smooth scroll to the Post-LP section including padding
-            postLpControl.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            // smooth-scroll to ensure Post-LP Probability is in view
+            postLpControl.scrollIntoView({ behavior: 'smooth', block: 'center' });
             const lpOdds = postOdds * combineLp;
             const lpProb = (lpOdds / (1 + lpOdds)) * 100;
-            if (lpProb < 1) {
-              postLpText.textContent = '~1 in ' + Math.round(1 / (lpProb / 100)).toLocaleString();
-            } else {
-              postLpText.textContent = lpProb.toFixed(1) + '%';
-            }
-          }
-          else postLpControl.style.display='none';
+            postLpText.textContent = lpProb < 1 ? `~1 in ${Math.round(1 / (lpProb / 100)).toLocaleString()}` : lpProb.toFixed(1) + '%';
+          } else postLpControl.style.display = 'none';
         }
         recalc();
-        document.querySelectorAll('.finding').forEach(el=>el.addEventListener('change',recalc));
-        [timeSelect,optAsah,optCons,optDelay,lpSpectro,lpRbc,lpVisual].forEach(el=>el.addEventListener('change',recalc));
+        document.querySelectorAll('.finding').forEach(el => el.addEventListener('change', recalc));
+        [timeSelect, optAsah, optCons, optDelay, lpSpectro, lpRbc, lpVisual].forEach(el => el.addEventListener('change', recalc));
       });
     </script>
   </div>
