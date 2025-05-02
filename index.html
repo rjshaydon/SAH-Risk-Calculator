@@ -1,165 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>SAH Risk Calculator</title>
   <style>
-
-
-/* Trim the bottom gap just for History & Examination */
-.findings fieldset {
-  /* keep top / left / right padding at 0.5rem, halve the bottom */
-  padding: 0.5rem 0.5rem 0rem;
-}
-
-/* Remove the margin under the very last label in each fieldset */
-.findings fieldset label:last-child {
-  /* margin-bottom: -2.5px;  <--- change this to increase/decrease the margin of white space in the History/Exam sections */
-}
-
-
-    body { margin: 0; padding: 0; display: flex; justify-content: center; background: #f9f9f9; font-family: system-ui, Arial, sans-serif; }
-    #app {
-      width: 360px;
-      background: #fff;
-      min-height: 100vh;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
-      margin: 0 auto;
-      position: relative;
-    }
-    header {
-      position: fixed;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 360px;
-      z-index: 20;
-      text-align: center;
-      padding: 0;
-      background: #2a4a7b;
-      color: #fff;
-    }
-    header h1 {
-      margin: 0;
-      padding: 0.4rem 0;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      padding: 0.5rem;
-      padding-top: 3.5rem;
-      overflow-y: auto;
-    }
-    .findings {
-      margin-top: 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; }
-    legend { padding: 0 0.5rem; font-weight: bold; }
-    fieldset label { display: flex; align-items: center; font-size: 0.85rem; margin-bottom: 0.25rem; justify-content: space-between; }
-    fieldset select { width: 100px; padding: 0.2rem; font-size: 0.85rem; }
-    .controls { display: grid; grid-template-columns: 1fr 100px; align-items: center; margin-top: 1rem; padding: 0 0.5rem; }
-    .controls + fieldset { margin-top: 1rem; }
+    body { margin: 0; padding: 0; display: flex; justify-content: center; background: #f9f9f9; font-family: Arial, sans-serif; }
+    #app { width: 360px; background: #fff; min-height: 100vh; box-shadow: 0 0 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; margin: auto; position: relative; }
+    header { position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 360px; background: #2a4a7b; color: #fff; text-align: center; z-index: 20; }
+    header h1 { margin: 0; padding: 0.5rem 0; font-size: 1.2rem; }
+    main { flex: 1; margin-top: 3.5rem; padding: 0.5rem; overflow-y: auto; }
+    .controls { display: grid; grid-template-columns: 1fr auto; align-items: center; margin-top: 1rem; padding: 0 0.5rem; }
+    .controls + .controls { margin-top: 2rem; }
+    .controls + fieldset, fieldset + .controls { margin-top: 1rem; }
+    /* Add spacing above Examination fieldset */
     fieldset + fieldset { margin-top: 1rem; }
     .controls strong { font-size: 0.9rem; justify-self: start; }
-    .controls .value { font-size: 1rem; justify-self: center; }
+    .controls .value { font-size: 1rem; justify-self: center; white-space: nowrap; }
+    .slider-container { grid-column: span 2; display: flex; justify-content: center; margin-top: 0.5rem; }
+    #presentation-range { width: 240px; }
+    fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; }
+    legend { padding: 0 0.5rem; font-weight: bold; }
+    fieldset label { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 0.25rem; }
+    select { width: 100px; padding: 0.2rem; font-size: 0.85rem; }
+    .section-title { margin: 2rem 0 1rem; font-size: 1rem; font-weight: bold; }
+    #postlp-fpr-text {
+      grid-column: 2;
+      justify-self: end;
+      text-align: right;
+      margin-top: 0.25rem;
+    }
   </style>
 </head>
 <body>
   <div id="app">
     <header><h1>SAH Risk Calculator</h1></header>
     <main>
-      <div class="findings">
-        <fieldset>
-          <legend>History</legend>
-          <label>Worst headache <select class="finding" data-key="Worst headache"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-          <label>Thunderclap <select class="finding" data-key="Thunderclap"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-          <label>Exertion at onset <select class="finding" data-key="Exertion at onset"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Loss of consciousness <select class="finding" data-key="Loss of consciousness"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Blurred vision <select class="finding" data-key="Blurred vision"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Awoke from sleep <select class="finding" data-key="Awoke from sleep"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Onset during intercourse <select class="finding" data-key="Onset during intercourse"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Nausea <select class="finding" data-key="Nausea"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-        </fieldset>
-        <fieldset>
-          <legend>Examination</legend>
-          <label>Neck stiffness (subjective) <select class="finding" data-key="Neck stiffness (subjective)"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-          <label>Meningism <select class="finding" data-key="Meningism"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Vomiting <select class="finding" data-key="Vomiting"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Unable to walk <select class="finding" data-key="Unable to walk"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Altered mental status <select class="finding" data-key="Altered mental status"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Focal neuro deficit <select class="finding" data-key="Focal neuro deficit"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-        </fieldset>
+      <div class="controls">
+        <strong>Pre-test Probability:</strong>
+        <span class="value" id="pretest-output-text">--</span>
       </div>
       <div class="controls">
-        <strong>Pre-test Probability:</strong><span class="value" id="pretest-output-text">10.4%</span>
+        <strong>Headache to CT time:</strong>
+        <span class="value" id="presentation-time-text">&lt;6 hrs</span>
+      </div>
+      <div class="slider-container">
+        <input type="range" id="presentation-range" min="0" max="5" step="1" />
       </div>
       <div class="controls">
-        <strong>Time to CT:</strong><select id="presentation-time"><option value="<6 hrs" selected>&lt;6 hrs</option><option value="6-12 hrs">6–12 hrs</option><option value="12-24 hrs">12–24 hrs</option><option value="24-48 hrs">24–48 hrs</option><option value="48-72 hrs">48–72 hrs</option><option value="72-96 hrs">72–96 hrs</option></select>
-      </div>
-      <div class="controls">
-        <strong>Post-test Probability:</strong><span class="value" id="posttest-prob-text">--</span>
+        <strong>Post-test Probability:</strong>
+        <span class="value" id="posttest-prob-text">--</span>
       </div>
       <fieldset>
         <legend>Options</legend>
-        <label>Aneurysmal SAH only <input type="checkbox" id="asah-only" /></label>
-        <label>Adjust for delay to presentation <input type="checkbox" id="adjust-delay" /></label>
-        <label>Maximally conservative <input type="checkbox" id="max-conservative" checked /></label>
+        <label>Aneurysmal SAH only <input type="checkbox" id="asah-only" checked /></label>
+        <label>Adjust for delay to presentation <input type="checkbox" id="adjust-delay" checked /></label>
+        <label>Maximally conservative <input type="checkbox" id="max-conservative" /></label>
+      </fieldset>
+      <div class="section-title">Clinical Findings...</div>
+      <fieldset>
+        <legend>History</legend>
+        <label>Worst headache <select class="finding" data-key="Worst headache"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
+        <label>Thunderclap <select class="finding" data-key="Thunderclap"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
+        <label>Exertion at onset <select class="finding" data-key="Exertion at onset"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+        <label>Loss of consciousness <select class="finding" data-key="Loss of consciousness"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+        <label>Blurred vision <select class="finding" data-key="Blurred vision"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+        <label>Awoke from sleep <select class="finding" data-key="Awoke from sleep"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+        <label>Onset during intercourse <select class="finding" data-key="Onset during intercourse"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+        <label>Nausea <select class="finding" data-key="Nausea"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
       </fieldset>
       <fieldset>
-        <legend>Lumbar Puncture</legend>
-        <label>UK Spectro xanthochromia <select id="lp-spectro" data-key="UK Spectro xanthochromia"><option value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-        <label>CSF RBC >1000 (x10^6) <select id="lp-rbc" data-key="CSF RBC >1000 (x10^6)"><option value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-        <label>Visual xanthochromia <select id="lp-visual" data-key="Visual xanthochromia"><option value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+        <legend>Examination</legend>
+        <label>Neck stiffness <select class="finding" data-key="Neck stiffness (subjective)"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
+        <label>Meningism <select class="finding" data-key="Meningism"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+        <label>Vomiting <select class="finding" data-key="Vomiting"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+        <label>Unable to walk <select class="finding" data-key="Unable to walk"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+        <label>Altered mental status <select class="finding" data-key="Altered mental status"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
+        <label>Focal neuro deficit <select class="finding" data-key="Focal neuro deficit"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
       </fieldset>
-      <div class="controls" id="postlp-control" style="display:none; margin-bottom: 1rem;"><strong>Post-LP Probability:</strong><span class="value" id="postlp-text">--</span></div>
+      <fieldset id="lp-section">
+        <legend>Lumbar Puncture</legend>
+        <label>UK Spectro xanthochromia <select id="lp-spectro" data-key="UK Spectro xanthochromia"><option value="na" selected>NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+        <label>CSF RBC >1000 <select id="lp-rbc" data-key="CSF RBC >1000 (x10^6)"><option value="na" selected>NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+        <label>Visual xanthochromia <select id="lp-visual" data-key="Visual xanthochromia"><option value="na" selected>NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+      </fieldset>
+      <fieldset id="postlp-control" style="display:none; margin-bottom:1rem;">
+        <legend>Post-LP Probability</legend>
+        <div class="controls" style="margin:0; padding:0;">
+          LP True Positive Rate:
+          <span class="value" id="postlp-text">--</span>
+        </div>
+        <div class="controls" style="margin:0; padding:0;">
+          LP False Positive Rate:
+          <span class="value" id="postlp-fpr-text">--</span>
+        </div>
+      </fieldset>
+      </div>
     </main>
     <script>
-      document.addEventListener('DOMContentLoaded',()=>{const baselineP=7.5;
-        const clinicalLRs={'Worst headache':{yes:1.25,no:0.24},'Thunderclap':{yes:1.34,no:0.74},'Exertion at onset':{yes:1.70,no:0.88},'Loss of consciousness':{yes:1.87,no:0.91},'Blurred vision':{yes:3.14,no:0.85},'Awoke from sleep':{yes:0.63,no:1.09},'Onset during intercourse':{yes:1.20,no:1.00},'Nausea':{yes:1.15,no:0.74},'Neck stiffness (subjective)':{yes:4.12,no:0.73},'Meningism':{yes:6.59,no:0.78},'Vomiting':{yes:1.92,no:0.52},'Unable to walk':{yes:2.36,no:0.85},'Altered mental status':{yes:2.18,no:0.87},'Focal neuro deficit':{yes:3.26,no:0.81}};
-        const preOutputText=document.getElementById('pretest-output-text'),postOutputText=document.getElementById('posttest-prob-text');
-        const timeSelect=document.getElementById('presentation-time'),optAsah=document.getElementById('asah-only'),optCons=document.getElementById('max-conservative'),optDelay=document.getElementById('adjust-delay');
-        const lpSpectro=document.getElementById('lp-spectro'),lpRbc=document.getElementById('lp-rbc'),lpVisual=document.getElementById('lp-visual');
-        const postLpControl=document.getElementById('postlp-control'),postLpText=document.getElementById('postlp-text');
-        const lpLR={
-          'UK Spectro xanthochromia':{positive:15.23,negative:0.13},
-          'CSF RBC >1000 (x10^6)':{positive:5.66,negative:0.21},
-          'Visual xanthochromia':{positive:12.56,negative:0.30}
+      document.addEventListener('DOMContentLoaded', () => {
+        // Cache selects
+        const findingSelects = Array.from(document.querySelectorAll('select.finding'));
+        const lpSelects = [
+          document.getElementById('lp-spectro'),
+          document.getElementById('lp-rbc'),
+          document.getElementById('lp-visual')
+        ].filter(el => el);
+
+        const baselineP = 7.5;
+        const clinicalLRs = {
+          'Worst headache': {yes:1.25,no:0.24}, 'Thunderclap': {yes:1.34,no:0.74}, 'Exertion at onset': {yes:1.70,no:0.88},
+          'Loss of consciousness': {yes:1.87,no:0.91}, 'Blurred vision': {yes:3.14,no:0.85}, 'Awoke from sleep': {yes:0.63,no:1.09},
+          'Onset during intercourse': {yes:1.20,no:1.00}, 'Nausea': {yes:1.15,no:0.74}, 'Neck stiffness (subjective)': {yes:4.12,no:0.73},
+          'Meningism': {yes:6.59,no:0.78}, 'Vomiting': {yes:1.92,no:0.52}, 'Unable to walk': {yes:2.36,no:0.85},
+          'Altered mental status': {yes:2.18,no:0.87}, 'Focal neuro deficit': {yes:3.26,no:0.81}
         };
-        const timeSens={'<6 hrs':{sah:[1.00,0.983],asah:[1.00,0.98]},'6-12 hrs':{sah:[0.992,0.972],asah:[1.00,0.982]},'12-24 hrs':{sah:[0.993,0.975],asah:[1.00,0.983]},'24-48 hrs':{sah:[0.990,0.971],asah:[0.996,0.976]},'48-72 hrs':{sah:[0.990,0.972],asah:[0.996,0.976]},'72-96 hrs':{sah:[0.978,0.955],asah:[0.987,0.964]}};
-        const timeOdds={'<6 hrs':{sah:2.074,asah:2.667},'6-12 hrs':{sah:0.482,asah:0.375},'12-24 hrs':{sah:0.282,asah:0.252},'24-48 hrs':{sah:0.153,asah:0.155},'48-72 hrs':{sah:0.107,asah:0.105},'72-96 hrs':{sah:0.081,asah:0.095}};
-        function recalc(){
-          let odds=baselineP/(100-baselineP),postOdds=null;
-          document.querySelectorAll('.finding').forEach(sel=>{const k=sel.dataset.key,v=sel.value,lr=v==='yes'?clinicalLRs[k].yes:v==='no'?clinicalLRs[k].no:1;odds*=lr;});
-          preOutputText.textContent=((odds/(1+odds))*100).toFixed(1)+'%';
-          const t=timeSelect.value,branch=optAsah.checked?'asah':'sah';
-          if(optDelay.checked)odds*=timeOdds[t][branch];
-          const pair=timeSens[t][branch],sensitivity=optCons.checked?pair[1]:pair[0];
-          if(sensitivity===1){postOutputText.textContent=(optAsah.checked?'aSAH':'SAH')+' excluded';}
-          else{postOdds=odds*(1-sensitivity);const pp=(postOdds/(1+postOdds))*100;if(pp<1)postOutputText.textContent='~1 in '+Math.round(1/(pp/100)).toLocaleString();else postOutputText.textContent=pp.toFixed(1)+'%';}
-          let combineLp=1,anyLp=false;[lpSpectro,lpRbc,lpVisual].forEach(el=>{const v=el.value,k=el.dataset.key;if(v==='positive'||v==='negative'){anyLp=true;combineLp*=lpLR[k][v];}});
-          if(anyLp && postOdds != null) {
-            postLpControl.style.display = '';
-            postLpControl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            const lpOdds = postOdds * combineLp;
-            const lpProb = (lpOdds / (1 + lpOdds)) * 100;
-            if (lpProb < 1) {
-              postLpText.textContent = '~1 in ' + Math.round(1 / (lpProb / 100)).toLocaleString();
-            } else {
-              postLpText.textContent = lpProb.toFixed(1) + '%';
-            }
-          }
-          else postLpControl.style.display='none';
+        const timeOptions = ['<6 hrs','6-12 hrs','12-24 hrs','24-48 hrs','48-72 hrs','72-96 hrs'];
+        const timeSens = {
+          '<6 hrs': { sah: [1.00, 0.983], asah: [1.00, 0.98] },
+          '6-12 hrs': { sah: [0.992, 0.972], asah: [1.00, 0.982] },
+          '12-24 hrs': { sah: [0.993, 0.975], asah: [1.00, 0.983] },
+          '24-48 hrs': { sah: [0.990, 0.971], asah: [0.996, 0.976] },
+          '48-72 hrs': { sah: [0.990, 0.972], asah: [0.996, 0.976] },
+          '72-96 hrs': { sah: [0.978, 0.955], asah: [0.987, 0.964] }
+        };
+        const timeOdds = {
+          '<6 hrs': { sah: 2.074, asah: 2.667 },
+          '6-12 hrs': { sah: 0.482, asah: 0.375 },
+          '12-24 hrs': { sah: 0.282, asah: 0.252 },
+          '24-48 hrs': { sah: 0.153, asah: 0.155 },
+          '48-72 hrs': { sah: 0.107, asah: 0.105 },
+          '72-96 hrs': { sah: 0.081, asah: 0.095 }
+        };
+        const lpLR = {
+          'UK Spectro xanthochromia': { positive: 15.23, negative: 0.13 },
+          'CSF RBC >1000 (x10^6)': { positive: 5.66, negative: 0.21 },
+          'Visual xanthochromia': { positive: 12.56, negative: 0.30 }
+        };
+
+        const preOutput = document.getElementById('pretest-output-text');
+        const postOutput = document.getElementById('posttest-prob-text');
+        const presentationRange = document.getElementById('presentation-range');
+        const presentationText = document.getElementById('presentation-time-text');
+        const optAsah = document.getElementById('asah-only');
+        const optDelay = document.getElementById('adjust-delay');
+        const optCons = document.getElementById('max-conservative');
+        const postLpCtrl = document.getElementById('postlp-control');
+        const postLpText = document.getElementById('postlp-text');
+        const postLpFpr = document.getElementById('postlp-fpr-text');
+
+        presentationRange.value = 0;
+        presentationText.textContent = timeOptions[0];
+
+        function getTimeKey() {
+          return timeOptions[presentationRange.value] || timeOptions[0];
         }
+
+        function recalc() {
+          // Pre-test
+          let odds = baselineP / (100 - baselineP);
+          findingSelects.forEach(sel => {
+            const v = sel.value || '';
+            const entry = clinicalLRs[sel.dataset.key] || {yes:1, no:1};
+            odds *= entry[v] !== undefined ? entry[v] : 1;
+          });
+          preOutput.textContent = (odds / (1 + odds) * 100).toFixed(1) + '%';
+
+          // Post-test
+          let postOdds = odds;
+          const branch = optAsah.checked ? 'asah' : 'sah';
+          if (optDelay.checked) postOdds *= (timeOdds[getTimeKey()]?.[branch] || 1);
+          const [sensNeg, sensCons] = timeSens[getTimeKey()]?.[branch] || [1,1];
+          const sensitivity = optCons.checked ? sensCons : sensNeg;
+          if (sensitivity === 1) {
+            postOutput.textContent = (optAsah.checked ? 'aSAH' : 'SAH') + ' excluded';
+            // Hide LP section when SAH excluded
+            document.getElementById('lp-section').style.display = 'none';
+            // Reset LP results to NA when section hidden
+            lpSelects.forEach(el => el.value = 'na');
+          } else {
+            // Show LP section when SAH not excluded
+            document.getElementById('lp-section').style.display = '';
+            postOdds *= (1 - sensitivity);
+            const pp = postOdds / (1 + postOdds) * 100;
+            postOutput.textContent = pp < 1 ? '~1 in ' + Math.round(1/(pp/100)).toLocaleString() : pp.toFixed(1) + '%';
+          }
+
+          // Post-LP
+          let combine = 1, any = false;
+          lpSelects.forEach(el => {
+            const v = el.value;
+            if (v === 'positive' || v === 'negative') {
+              any = true;
+              combine *= (lpLR[el.dataset.key]?.[v] || 1);
+            }
+          });
+          if (any) {
+            postLpCtrl.style.display = '';
+            const lpOdds = postOdds * combine;
+            const lpProb = lpOdds / (1 + lpOdds) * 100;
+            postLpText.textContent = lpProb < 1 ? '~1 in ' + Math.round(1/(lpProb/100)).toLocaleString() : lpProb.toFixed(1) + '%';
+            postLpFpr.textContent = (100 - lpProb).toFixed(1) + '%';
+          } else {
+            postLpCtrl.style.display = 'none';
+            postLpFpr.textContent = '';
+          }
+        }
+
+        // Event listeners
+        presentationRange.addEventListener('input', () => {
+          presentationText.textContent = getTimeKey();
+          recalc();
+        });
+        findingSelects.forEach(sel => sel.addEventListener('change', recalc));
+        [optAsah, optDelay, optCons, ...lpSelects].forEach(el => el && el.addEventListener('change', recalc));
+
         recalc();
-        document.querySelectorAll('.finding').forEach(el=>el.addEventListener('change',recalc));
-        [timeSelect,optAsah,optCons,optDelay,lpSpectro,lpRbc,lpVisual].forEach(el=>el.addEventListener('change',recalc));
       });
     </script>
   </div>
