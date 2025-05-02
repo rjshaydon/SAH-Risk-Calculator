@@ -197,6 +197,8 @@
           });
           if (any) {
             postLpCtrl.style.display = '';
+            // Scroll into view when LP result is added
+            postLpCtrl.scrollIntoView({ behavior: 'smooth', block: 'start' });
             const lpOdds = postOdds * combine;
             const lpProb = lpOdds / (1 + lpOdds) * 100;
             postLpText.textContent = lpProb < 1 ? '~1 in ' + Math.round(1/(lpProb/100)).toLocaleString() : lpProb.toFixed(1) + '%';
