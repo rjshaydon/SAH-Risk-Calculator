@@ -1,567 +1,996 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SAH Risk Calculator</title>
-  <style>
-    :root { --app-width: 420px; --header-height: 3.5rem; }
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #f9f9f9; }
-    header { position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background: #2a4a7b; color: #fff;      display: flex; align-items: center; justify-content: center; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.2);    }
-    header h1 { margin: 0; font-size: 1.4rem; }
-    #wrapper { display: flex; flex-direction: column; margin-top: var(--header-height); }
-    #nomogram {
-      display: none; flex: 1 1 0; padding: 1rem; background: #fff; border-right: 1px solid #ddd;
-      align-items: center; justify-content: center;
-    }
-    #nomogram canvas { width: 100%; height: auto; }
-    #app {
-      flex: 0 0 var(--app-width); max-width: var(--app-width); width: 100%; background: #fff;
-      min-height: calc(100vh - var(--header-height)); box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      display: flex; flex-direction: column; position: relative; margin: 0 auto;
-    }
-    main { flex: 1; padding: 0.5rem; overflow-y: auto; }
-    .controls { display: grid; grid-template-columns: 1fr auto; align-items: center;
-      margin-top: 1rem; padding: 0 0.5rem;
-    }
-    .controls + .controls { margin-top: 2rem; }
-    .controls + fieldset, fieldset + .controls { margin-top: 1rem; }
-    fieldset + fieldset { margin-top: 1rem; }
-    .controls strong { font-size: 0.9rem; }
-    .controls .value { font-size: 1rem; white-space: nowrap; }
-    .slider-container { grid-column: span 2; display: flex; justify-content: center; margin-top: 0.5rem; }
-    #presentation-range { width: 240px; }
-    fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; }
-    legend { padding: 0 0.5rem; font-weight: bold; }
-    fieldset label { display: flex; justify-content: space-between; align-items: center;
-      font-size: 0.85rem; margin-bottom: 0.25rem;
-    }
-    select { width: 100px; padding: 0.2rem; font-size: 0.85rem; }
-    .section-title { margin: 2rem 0 1rem; font-size: 1rem; font-weight: bold; }
-    #postlp-fpr-text { grid-column: 2; justify-self: end; text-align: right; margin-top: 0.25rem; }
-    @media (max-width: 767px) {
-      header { position: static; max-width: var(--app-width); margin: 0 auto; }
-      #nomogram { display: flex; width: 100%; max-width: var(--app-width);
-        margin: 0 auto; border: none; padding: 1rem;
-      }
-      #nomogram canvas { width: 100%; height: auto; }
-      #wrapper { flex-direction: column; margin-top: 0; min-width: var(--app-width); }
-    }
-    @media (min-width: 768px) {
-      #wrapper { flex-direction: row; max-width: 1100px; margin: 0 auto; }
-      #nomogram {
-        display: flex;
-        flex: 1 1 0; /* Explicitly define flex properties */
-        min-width: 0; /* Allow nomogram to shrink */
-      }
-      #nomogram canvas { width: 100%; height: auto; max-width: none; }
-      #app {
-        margin: 60px 0 0 0;
-        flex: 0 0 var(--app-width); /* Ensure app retains fixed width */
-        max-width: var(--app-width); /* Redundant but safe */
-      }
-      main > .controls:first-child {
-        margin-top: 2rem; /* Keep increased space */
-      }
-    }
-  </style>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>SAH Risk Calculator</title>
+    <style>
+        /* Basic CSS Reset and Variables */
+        :root { --app-width: 420px; --header-height: 3.5rem; }
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #f9f9f9; }
+
+        /* Header Styles */
+        header { position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background: #2a4a7b; color: #fff; display: flex; align-items: center; justify-content: center; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        header h1 { margin: 0; font-size: 1.4rem; }
+
+        /* Layout Wrapper */
+        #wrapper { display: flex; flex-direction: column; margin-top: var(--header-height); }
+
+        /* Nomogram Styles */
+        #nomogram {
+            display: none; /* Hidden by default, shown via media query */
+            flex: 1 1 0; /* Flex properties for desktop layout */
+            padding: 1rem; background: #fff; border-right: 1px solid #ddd;
+            align-items: center; justify-content: center;
+        }
+        #nomogram canvas { width: 100%; height: auto; } /* Responsive canvas */
+
+        /* Main App Panel Styles */
+        #app {
+            flex: 0 0 var(--app-width); /* Fixed width for the app panel */
+            max-width: var(--app-width); width: 100%; background: #fff;
+            min-height: calc(100vh - var(--header-height)); /* Ensure it fills height */
+            box-shadow: 0 0 8px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; position: relative; margin: 0 auto; /* Center on mobile */
+        }
+        main { flex: 1; padding: 0.5rem; background:#fff; } /* Main content area */
+
+        /* Control Section Styles (Sliders, Text Outputs) */
+        .controls { display: grid; grid-template-columns: 1fr auto; align-items: center; margin-top: 1rem; padding: 0 0.5rem; }
+        .controls + .controls { margin-top: 2rem; } /* Spacing between control groups */
+        .controls + fieldset, fieldset + .controls { margin-top: 1rem; } /* Spacing around fieldsets */
+        fieldset + fieldset { margin-top: 1rem; }
+        .controls strong { font-size: 0.9rem; }
+        .controls .value { font-size: 1rem; white-space: nowrap; }
+        .slider-container { grid-column: span 2; display: flex; justify-content: center; margin-top: 0.5rem; }
+        #presentation-range { width: 240px; } /* Slider width */
+
+        /* Fieldset and Legend Styles */
+        fieldset { border: 1px solid #ccc; border-radius: 4px; padding: 0.5rem; }
+        legend { padding: 0 0.5rem; font-weight: bold; }
+        fieldset label { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 0.25rem; }
+        select { width: 100px; padding: 0.2rem; font-size: 0.85rem; } /* Select dropdown style */
+
+        /* Section Title Styles */
+        .section-title { margin: 2rem 0 1rem; font-size: 1rem; font-weight: bold; }
+
+        /* Specific Element Styles */
+        #postlp-fpr-text { grid-column: 2; justify-self: end; text-align: right; margin-top: 0.25rem; }
+
+        /* --- Responsive Design --- */
+
+        /* Mobile Styles (<= 767px) */
+        @media (max-width: 767px) {
+            header { position: static; max-width: var(--app-width); margin: 0 auto; } /* Header becomes static */
+            #nomogram {
+                display: flex; /* Show nomogram on mobile */
+                width: 100%; max-width: var(--app-width);
+                margin: 0 auto; border: none; padding: 1rem;
+            }
+            #nomogram canvas { width: 100%; height: auto; }
+            #wrapper { flex-direction: column; margin-top: 0; min-width: var(--app-width); }
+            main { overflow-y: visible; flex: 0 0 auto; } /* Allow main content to determine height */
+        }
+
+        /* Desktop Styles (>= 768px) */
+        @media (min-width: 768px) {
+            #wrapper { flex-direction: row; max-width: 1100px; margin: 60px auto 0 auto; } /* Side-by-side layout */
+            #nomogram {
+                display: flex; /* Ensure nomogram is visible */
+                flex: 1 1 0; /* Allow nomogram to take available space */
+                min-width: 0; /* Allow nomogram to shrink */
+            }
+            #nomogram canvas { width: 100%; height: auto; max-width: none; }
+            #app {
+                margin: 0; /* Remove top margin added for centering on mobile */
+                flex: 0 0 var(--app-width); /* Keep app panel fixed width */
+                max-width: var(--app-width);
+            }
+            main > .controls:first-child { margin-top: 2rem; } /* Keep spacing */
+            main { overflow-y: auto; height: calc(100vh - var(--header-height)); } /* Make main content scrollable */
+        }
+
+        /* --- Jiggle-mode CSS --- */
+        /* Prevent text selection on elements involved in jiggle mode */
+        select, .segment, .segment-group {
+            user-select: none !important;
+            -webkit-user-select: none !important; /* Safari */
+            -moz-user-select: none !important; /* Firefox */
+            -ms-user-select: none !important; /* IE/Edge */
+        }
+        /* Disable text selection globally while jiggle mode is active */
+        .jiggle-active body, .jiggle-active * {
+            user-select: none !important;
+            -webkit-user-select: none !important;
+            -moz-user-select: none !important;
+            -ms-user-select: none !important;
+        }
+
+        /* Styles for the replacement segmented controls */
+        .segment-group {
+            display: flex;
+            width: 100px; /* Match select width */
+            border: 1px solid #bbb;
+            border-radius: 5px;
+            overflow: hidden;
+            font-size: 0.85rem; /* Match select font size */
+            cursor: pointer; /* Change cursor to pointer for segments */
+        }
+        .segment {
+            flex: 1;
+            padding: 0.4rem 0; /* Match select vertical padding */
+            background: #f4f4f4;
+            border-right: 1px solid #ccc;
+            text-align: center;
+            transition: background-color 0.1s ease, color 0.1s ease; /* Smooth selection change */
+        }
+        .segment:last-child { border-right: none; }
+        .segment.selected {
+            background: #2196f3; /* Highlight selected segment */
+            color: white;
+        }
+
+        /* Jiggle animation */
+        .jiggle-mode {
+            animation: jiggle 0.12s infinite alternate; /* Adjusted duration */
+            border: 2px dashed #777 !important; /* Dashed border to indicate jiggle */
+        }
+        @keyframes jiggle {
+            0% { transform: rotate(-1.5deg); }
+            100% { transform: rotate(1.5deg); }
+        }
+
+    </style>
 </head>
 <body>
-  <header><h1>SAH Risk Calculator</h1></header>
-  <div id="wrapper">
-    <div id="nomogram"><canvas id="nomogram-canvas" width="1000" height="1000"></canvas></div>
-    <div id="app">
-      <main>
-        <div class="controls"><strong>Pre-test Probability:</strong><span class="value" id="pretest-output-text">--</span></div>
-        <div class="controls"><strong>Headache to CT time:</strong><span class="value" id="presentation-time-text"><6 hrs</span></div>
-        <div class="slider-container"><input type="range" id="presentation-range" min="0" max="5" step="1" /></div>
-        <div class="controls"><strong>Post-test Probability:</strong><span class="value" id="posttest-prob-text">--</span></div>
-        <fieldset><legend>Options</legend>
-          <label>Aneurysmal SAH only <input type="checkbox" id="asah-only" checked /></label>
-          <label>Adjust for delay to presentation <input type="checkbox" id="adjust-delay" checked /></label>
-          <label>Maximally conservative <input type="checkbox" id="max-conservative" /></label>
-        </fieldset>
-        <div class="section-title">Clinical Findings...</div>
-        <fieldset><legend>History</legend>
-          <label>Worst headache <select class="finding" data-key="Worst headache"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-          <label>Thunderclap <select class="finding" data-key="Thunderclap"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-          <label>Exertion at onset <select class="finding" data-key="Exertion at onset"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Loss of consciousness <select class="finding" data-key="Loss of consciousness"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Blurred vision <select class="finding" data-key="Blurred vision"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Awoke from sleep <select class="finding" data-key="Awoke from sleep"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Onset during intercourse <select class="finding" data-key="Onset during intercourse"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Nausea <select class="finding" data-key="Nausea"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-        </fieldset>
-        <fieldset><legend>Examination</legend>
-          <label>Neck stiffness <select class="finding" data-key="Neck stiffness (subjective)"><option value="">Unknown</option><option value="yes" selected>Yes</option><option value="no">No</option></select></label>
-          <label>Meningism <select class="finding" data-key="Meningism"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Vomiting <select class="finding" data-key="Vomiting"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Unable to walk <select class="finding" data-key="Unable to walk"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Altered mental status <select class="finding" data-key="Altered mental status"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-          <label>Focal neuro deficit <select class="finding" data-key="Focal neuro deficit"><option value="">Unknown</option><option value="yes">Yes</option><option value="no" selected>No</option></select></label>
-        </fieldset>
-        <fieldset id="lp-section"><legend>Lumbar Puncture</legend>
-          <label>UK Spectro xanthochromia <select id="lp-spectro" data-key="UK Spectro xanthochromia"><option value="na" selected>NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-          <label>CSF RBC >1000 <select id="lp-rbc" data-key="CSF RBC >1000 (x10^6)"><option value="na" selected>NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-          <label>Visual xanthochromia <select id="lp-visual" data-key="Visual xanthochromia"><option value="na" selected>NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-        </fieldset>
-        <fieldset id="postlp-control" style="display:none; margin-bottom:1rem;"><legend>Post-LP Probability</legend>
-          <div class="controls" style="margin:0; padding:0;">LP True Positive Rate:<span class="value" id="postlp-text">--</span></div>
-          <div class="controls" style="margin:0; padding:0;">LP False Positive Rate:<span class="value" id="postlp-fpr-text">--</span></div>
-        </fieldset>
-      </main>
+    <header><h1>SAH Risk Calculator</h1></header>
+    <div id="wrapper">
+        <div id="nomogram"><canvas height="1000" id="nomogram-canvas" width="1000"></canvas></div>
+        <div id="app">
+            <main>
+                <div class="controls"><strong>Pre-test Probability:</strong><span class="value" id="pretest-output-text">--</span></div>
+                <div class="controls"><strong>Headache to CT time:</strong><span class="value" id="presentation-time-text">&lt;6 hrs</span></div>
+                <div class="slider-container"><input id="presentation-range" max="5" min="0" step="1" type="range"/></div>
+                <div class="controls"><strong>Post-test Probability:</strong><span class="value" id="posttest-prob-text">--</span></div>
+
+                <fieldset><legend>Options</legend>
+                    <label>Aneurysmal SAH only <input checked="" id="asah-only" type="checkbox"/></label>
+                    <label>Adjust for delay to presentation <input checked="" id="adjust-delay" type="checkbox"/></label>
+                    <label>Maximally conservative <input id="max-conservative" type="checkbox"/></label>
+                </fieldset>
+
+                <div class="section-title">Clinical Findings...</div>
+
+                <fieldset><legend>History</legend>
+                    <label>Worst headache <select class="finding" data-key="Worst headache"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
+                    <label>Thunderclap <select class="finding" data-key="Thunderclap"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
+                    <label>Exertion at onset <select class="finding" data-key="Exertion at onset"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                    <label>Loss of consciousness <select class="finding" data-key="Loss of consciousness"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                    <label>Blurred vision <select class="finding" data-key="Blurred vision"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                    <label>Awoke from sleep <select class="finding" data-key="Awoke from sleep"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                    <label>Onset during intercourse <select class="finding" data-key="Onset during intercourse"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                    <label>Nausea <select class="finding" data-key="Nausea"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
+                </fieldset>
+
+                <fieldset><legend>Examination</legend>
+                    <label>Neck stiffness <select class="finding" data-key="Neck stiffness (subjective)"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
+                    <label>Meningism <select class="finding" data-key="Meningism"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                    <label>Vomiting <select class="finding" data-key="Vomiting"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                    <label>Unable to walk <select class="finding" data-key="Unable to walk"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                    <label>Altered mental status <select class="finding" data-key="Altered mental status"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                    <label>Focal neuro deficit <select class="finding" data-key="Focal neuro deficit"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+                </fieldset>
+
+                <fieldset id="lp-section"><legend>Lumbar Puncture</legend>
+                    <label>UK Spectro xanthochromia <select id="lp-spectro" data-key="UK Spectro xanthochromia"><option selected="" value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+                    <label>CSF RBC &gt;1000 <select id="lp-rbc" data-key="CSF RBC >1000 (x10^6)"><option selected="" value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+                    <label>Visual xanthochromia <select id="lp-visual" data-key="Visual xanthochromia"><option selected="" value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+                </fieldset>
+
+                <fieldset id="postlp-control" style="display:none; margin-bottom:1rem;"><legend>Post-LP Probability</legend>
+                    <div class="controls" style="margin:0; padding:0;">LP True Positive Rate:<span class="value" id="postlp-text">--</span></div>
+                    <div class="controls" style="margin:0; padding:0;">LP False Positive Rate:<span class="value" id="postlp-fpr-text">--</span></div>
+                </fieldset>
+            </main>
+        </div>
     </div>
-  </div>
-  <script>
-    function drawNomogram(preProbDecimal, postProbDecimal, isExcluded) {
-      // --- Start of drawNomogram (Keep the previous working version) ---
-      const canvas = document.getElementById('nomogram-canvas');
-      if (!canvas) { console.error("Canvas element not found"); return; }
-      const ctx = canvas.getContext('2d');
-      if (!ctx) { console.error("Could not get 2D context"); return; }
 
-      const displayWidth = canvas.clientWidth;
-      const displayHeight = canvas.clientHeight;
-      if (displayWidth <= 0 || displayHeight <= 0) { return; }
+    <script>
+        // --- Nomogram Drawing Function ---
+        // (No changes needed in this function)
+        function drawNomogram(preProbDecimal, postProbDecimal, isExcluded) {
+            const canvas = document.getElementById('nomogram-canvas');
+            if (!canvas) { console.error("Canvas element not found"); return; }
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { console.error("Could not get 2D context"); return; }
 
-      const ratio = window.devicePixelRatio || 1;
-      canvas.width = displayWidth * ratio;
-      canvas.height = displayHeight * ratio;
-      ctx.scale(ratio, ratio);
+            const displayWidth = canvas.clientWidth;
+            const displayHeight = canvas.clientHeight;
+            if (displayWidth <= 0 || displayHeight <= 0) { return; }
 
-      const w = displayWidth;
-      const h = displayHeight;
-      ctx.clearRect(0, 0, w, h);
+            const ratio = window.devicePixelRatio || 1;
+            canvas.width = displayWidth * ratio;
+            canvas.height = displayHeight * ratio;
+            ctx.scale(ratio, ratio);
 
-      const baseWidth = 500;
-      const scaleFactor = Math.min(w / baseWidth, h / baseWidth);
+            const w = displayWidth;
+            const h = displayHeight;
+            ctx.clearRect(0, 0, w, h);
 
-      const baseFontSize = 10;
-      const baseTitleFontSize = 12;
-      const baseTickLength = 8;
-      const baseLabelOffset = 5;
-      // Removed baseTitleOffset, calculated based on font size now
-      const basePaddingHorizontal = { left: 60, right: 60 };
+            const baseWidth = 500;
+            const scaleFactor = Math.min(w / baseWidth, h / baseWidth);
 
-      const fontSize = Math.max(8, baseFontSize * scaleFactor);
-      const titleFontSize = Math.max(10, baseTitleFontSize * scaleFactor);
-      const tickLength = Math.max(4, baseTickLength * scaleFactor);
-      const labelOffset = Math.max(3, baseLabelOffset * scaleFactor);
-      // const titleOffset = Math.max(15, baseTitleOffset * scaleFactor); // Removed
+            const baseFontSize = 10;
+            const baseTitleFontSize = 12;
+            const baseTickLength = 8;
+            const baseLabelOffset = 5;
+            const basePaddingHorizontal = { left: 60, right: 60 };
 
-      const widthScaleFactor = w / baseWidth;
-      const padding = {
-          left: Math.max(30, basePaddingHorizontal.left * widthScaleFactor),
-          right: Math.max(30, basePaddingHorizontal.right * widthScaleFactor),
-          top: 0, bottom: 0
-      };
+            const fontSize = Math.max(8, baseFontSize * scaleFactor);
+            const titleFontSize = Math.max(10, baseTitleFontSize * scaleFactor);
+            const tickLength = Math.max(4, baseTickLength * scaleFactor);
+            const labelOffset = Math.max(3, baseLabelOffset * scaleFactor);
 
-      // Calculate top padding needed for titles
-      const titleHeightEstimate = titleFontSize * 2.5; // Estimate space for two lines + spacing
-      const minTopPadding = Math.max(20, titleHeightEstimate);
-
-      // Calculate remaining height for scale and distribute padding
-      const availableHeightForScaleAndBottomPadding = h - minTopPadding;
-      const targetScaleHeight = Math.max(50, availableHeightForScaleAndBottomPadding * 0.9); // Use 90% of remaining for scale
-      const minBottomPadding = 20;
-
-      padding.top = minTopPadding;
-      let scaleHeight = targetScaleHeight;
-      padding.bottom = h - padding.top - scaleHeight;
-
-      // Ensure bottom padding is sufficient
-      if (padding.bottom < minBottomPadding) {
-         scaleHeight -= (minBottomPadding - padding.bottom);
-         padding.bottom = minBottomPadding;
-      }
-
-       // Ensure scaleHeight is positive after adjustments
-      if (scaleHeight <= 0) {
-          console.warn("Calculated scale height is not positive. Aborting draw.", {h, paddingTop: padding.top, paddingBottom: padding.bottom});
-          return;
-      }
-
-      const preTestX = padding.left;
-      const lrX = w / 2;
-      const postTestX = w - padding.right;
-      if (postTestX <= lrX + 20 || lrX <= preTestX + 20) {
-          console.warn("Canvas too narrow for nomogram layout.");
-          return;
-      }
-
-      const probToOdds = p => p / (1 - p);
-      const oddsToProb = o => o / (1 + o);
-      const logOdds = p => Math.log(probToOdds(p));
-
-      const axisMinProb = 0.0001;
-      const axisMaxProb = 0.9999;
-      const axisMinLogOdds = logOdds(axisMinProb);
-      const axisMaxLogOdds = logOdds(axisMaxProb);
-      const axisLogOddsRange = axisMaxLogOdds - axisMinLogOdds;
-
-      if (axisLogOddsRange <= 0 || !isFinite(axisLogOddsRange)) {
-         console.error("Invalid axis log-odds range:", axisLogOddsRange);
-         return;
-      }
-
-      const probToY_HighProbHighY = p => {
-          const clampedP = Math.max(axisMinProb, Math.min(p, axisMaxProb));
-          return padding.top + scaleHeight * ((logOdds(clampedP) - axisMinLogOdds) / axisLogOddsRange);
-      };
-      const probToY_HighProbLowY = p => {
-          const clampedP = Math.max(axisMinProb, Math.min(p, axisMaxProb));
-          return padding.top + scaleHeight * (1 - (logOdds(clampedP) - axisMinLogOdds) / axisLogOddsRange);
-      };
-
-      const Y_mid = probToY_HighProbHighY(0.5);
-      const lrScaleFactor = scaleHeight * logOdds(0.75) / (axisLogOddsRange * Math.log(10));
-      const lrToY = lr => {
-        if (lr <= 0) return padding.top + scaleHeight;
-        return Y_mid - lrScaleFactor * Math.log(lr);
-      }
-
-      const formatProbLabel = p => (p * 100).toFixed(p < 0.01 || p > 0.99 ? 2 : (p < 0.1 || p > 0.9 ? 1 : 0)) + '%';
-
-      ctx.lineWidth = Math.max(1, 1.5 * scaleFactor);
-      ctx.strokeStyle = '#555';
-      ctx.fillStyle = '#333';
-      ctx.font = `${fontSize}px Arial`;
-      ctx.textAlign = 'right';
-
-      ctx.beginPath(); ctx.setLineDash([]); ctx.moveTo(preTestX, padding.top); ctx.lineTo(preTestX, padding.top + scaleHeight); ctx.stroke(); // Pre
-      ctx.save(); ctx.fillStyle = '#555'; const dotRadius = Math.max(0.5, 0.5 * scaleFactor); const dotSpacing = Math.max(4, 6 * scaleFactor); for (let y = padding.top; y <= padding.top + scaleHeight; y += dotSpacing) { ctx.beginPath(); ctx.arc(lrX, y, dotRadius, 0, 2 * Math.PI); ctx.fill(); } ctx.restore(); // LR (dotted)
-      ctx.beginPath(); ctx.setLineDash([]); ctx.moveTo(postTestX, padding.top); ctx.lineTo(postTestX, padding.top + scaleHeight); ctx.stroke(); // Post
-
-      const probTicks = [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.5, 0.8, 0.9, 0.95, 0.99, 0.999, 0.9999];
-      ctx.textAlign = 'right';
-      probTicks.forEach(p => { const y = probToY_HighProbHighY(p); ctx.beginPath(); ctx.moveTo(preTestX - tickLength / 2, y); ctx.lineTo(preTestX + tickLength / 2, y); ctx.stroke(); ctx.fillText(formatProbLabel(p), preTestX - labelOffset - tickLength / 2, y + (fontSize / 2.5)); });
-
-      const lrTicks = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000];
-      lrTicks.forEach(lr => { const y = lrToY(lr); if (y >= padding.top && y <= padding.top + scaleHeight) { ctx.save(); if (lr === 1) { const crossSize = tickLength; ctx.beginPath(); ctx.setLineDash([]); ctx.moveTo(lrX - crossSize / 2, y); ctx.lineTo(lrX + crossSize / 2, y); ctx.moveTo(lrX, y - crossSize / 2); ctx.lineTo(lrX, y + crossSize / 2); ctx.stroke(); } ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(lr.toString(), lrX + labelOffset, y); ctx.restore(); } });
-      ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-
-      ctx.textAlign = 'left';
-      probTicks.forEach(p => { const y = probToY_HighProbLowY(p); ctx.beginPath(); ctx.moveTo(postTestX - tickLength / 2, y); ctx.lineTo(postTestX + tickLength / 2, y); ctx.stroke(); ctx.fillText(formatProbLabel(p), postTestX + labelOffset + tickLength / 2, y + (fontSize / 2.5)); });
-
-      ctx.font = `bold ${titleFontSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-      const titleY = padding.top - titleFontSize * 0.5;
-      const titleLineSpacing = titleFontSize * 1.2;
-      ctx.fillText('Probability', preTestX, titleY); ctx.fillText('Pre-test', preTestX, titleY - titleLineSpacing);
-      ctx.fillText('Ratio', lrX, titleY); ctx.fillText('Likelihood', lrX, titleY - titleLineSpacing);
-      ctx.fillText('Probability', postTestX, titleY); ctx.fillText('Post-test', postTestX, titleY - titleLineSpacing);
-      ctx.textBaseline = 'alphabetic';
-
-      const currentPreTestProb = preProbDecimal;
-      const plotPostProb = postProbDecimal;
-      const isExcludedByArg = isExcluded;
-
-      const preY = probToY_HighProbHighY(currentPreTestProb);
-      let postY;
-      if (isExcludedByArg) {
-           postY = probToY_HighProbLowY(axisMinProb);
-      } else {
-           postY = probToY_HighProbLowY(plotPostProb);
-      }
-
-      if (isFinite(preY) && isFinite(postY)) {
-          ctx.beginPath();
-          ctx.moveTo(preTestX, preY);
-          ctx.lineTo(postTestX, postY);
-
-          const colorProb = isExcludedByArg ? axisMinProb : plotPostProb;
-          ctx.strokeStyle = colorProb >= 0.002 ? '#cc0000' : '#00cc00';
-          ctx.lineWidth = Math.max(1.5, 2 * scaleFactor);
-
-          ctx.setLineDash(isExcludedByArg ? [Math.max(3, 5 * scaleFactor), Math.max(3, 5 * scaleFactor)] : []);
-
-          ctx.stroke();
-
-          ctx.setLineDash([]);
-          ctx.lineWidth = Math.max(1, 1.5 * scaleFactor);
-          ctx.strokeStyle = '#555';
-      } else {
-          console.warn("Skipping line draw due to invalid Y coordinates.", {preY, postY});
-      }
-     // --- End of drawNomogram ---
-    }
-
-    // --- Start of debounce function ---
-    function debounce(func, wait, immediate) {
-        var timeout;
-        return function() {
-            var context = this, args = arguments;
-            var later = function() {
-                timeout = null;
-                if (!immediate) func.apply(context, args);
+            const widthScaleFactor = w / baseWidth;
+            const padding = {
+                left: Math.max(30, basePaddingHorizontal.left * widthScaleFactor),
+                right: Math.max(30, basePaddingHorizontal.right * widthScaleFactor),
+                top: 0, bottom: 0
             };
-            var callNow = immediate && !timeout;
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-            if (callNow) func.apply(context, args);
+
+            const titleHeightEstimate = titleFontSize * 3.2; // Increased from 2.5 to 3.2 to provide more space for title labels
+            const minTopPadding = Math.max(20, titleHeightEstimate);
+
+            const availableHeightForScaleAndBottomPadding = h - minTopPadding;
+            const targetScaleHeight = Math.max(50, availableHeightForScaleAndBottomPadding * 0.9);
+            const minBottomPadding = 20;
+
+            padding.top = minTopPadding;
+            let scaleHeight = targetScaleHeight;
+            padding.bottom = h - padding.top - scaleHeight;
+
+            if (padding.bottom < minBottomPadding) {
+                scaleHeight -= (minBottomPadding - padding.bottom);
+                padding.bottom = minBottomPadding;
+            }
+
+            if (scaleHeight <= 0) {
+                console.warn("Calculated scale height is not positive. Aborting draw.", {h, paddingTop: padding.top, paddingBottom: padding.bottom});
+                return;
+            }
+
+            const preTestX = padding.left;
+            const lrX = w / 2;
+            const postTestX = w - padding.right;
+            if (postTestX <= lrX + 20 || lrX <= preTestX + 20) {
+                console.warn("Canvas too narrow for nomogram layout.");
+                return;
+            }
+
+            const probToOdds = p => p / (1 - p);
+            const oddsToProb = o => o / (1 + o);
+            const logOdds = p => Math.log(probToOdds(p));
+
+            const axisMinProb = 0.0001;
+            const axisMaxProb = 0.9999;
+            const axisMinLogOdds = logOdds(axisMinProb);
+            const axisMaxLogOdds = logOdds(axisMaxProb);
+            const axisLogOddsRange = axisMaxLogOdds - axisMinLogOdds;
+
+            if (axisLogOddsRange <= 0 || !isFinite(axisLogOddsRange)) {
+                console.error("Invalid axis log-odds range:", axisLogOddsRange);
+                return;
+            }
+
+            const probToY_HighProbHighY = p => {
+                const clampedP = Math.max(axisMinProb, Math.min(p, axisMaxProb));
+                return padding.top + scaleHeight * ((logOdds(clampedP) - axisMinLogOdds) / axisLogOddsRange);
+            };
+            const probToY_HighProbLowY = p => {
+                const clampedP = Math.max(axisMinProb, Math.min(p, axisMaxProb));
+                return padding.top + scaleHeight * (1 - (logOdds(clampedP) - axisMinLogOdds) / axisLogOddsRange);
+            };
+
+            const Y_mid = probToY_HighProbHighY(0.5);
+            const lrScaleFactor = scaleHeight * logOdds(0.75) / (axisLogOddsRange * Math.log(10));
+            const lrToY = lr => {
+                if (lr <= 0) return padding.top + scaleHeight;
+                return Y_mid - lrScaleFactor * Math.log(lr);
+            }
+
+            const formatProbLabel = p => (p * 100).toFixed(p < 0.01 || p > 0.99 ? 2 : (p < 0.1 || p > 0.9 ? 1 : 0)) + '%';
+
+            ctx.lineWidth = Math.max(1, 1.5 * scaleFactor);
+            ctx.strokeStyle = '#555';
+            ctx.fillStyle = '#333';
+            ctx.font = `${fontSize}px Arial`;
+            ctx.textAlign = 'right';
+
+            ctx.beginPath(); ctx.setLineDash([]); ctx.moveTo(preTestX, padding.top); ctx.lineTo(preTestX, padding.top + scaleHeight); ctx.stroke();
+            ctx.save(); ctx.fillStyle = '#555'; const dotRadius = Math.max(0.5, 0.5 * scaleFactor); const dotSpacing = Math.max(4, 6 * scaleFactor); for (let y = padding.top; y <= padding.top + scaleHeight; y += dotSpacing) { ctx.beginPath(); ctx.arc(lrX, y, dotRadius, 0, 2 * Math.PI); ctx.fill(); } ctx.restore();
+            ctx.beginPath(); ctx.setLineDash([]); ctx.moveTo(postTestX, padding.top); ctx.lineTo(postTestX, padding.top + scaleHeight); ctx.stroke();
+
+            const probTicks = [0.0001, 0.001, 0.01, 0.05, 0.1, 0.2, 0.5, 0.8, 0.9, 0.95, 0.99, 0.999, 0.9999];
+            ctx.textAlign = 'right';
+            probTicks.forEach(p => { const y = probToY_HighProbHighY(p); ctx.beginPath(); ctx.moveTo(preTestX - tickLength / 2, y); ctx.lineTo(preTestX + tickLength / 2, y); ctx.stroke(); ctx.fillText(formatProbLabel(p), preTestX - labelOffset - tickLength / 2, y + (fontSize / 2.5)); });
+
+            const lrTicks = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000];
+            lrTicks.forEach(lr => { const y = lrToY(lr); if (y >= padding.top && y <= padding.top + scaleHeight) { ctx.save(); if (lr === 1) { const crossSize = tickLength; ctx.beginPath(); ctx.setLineDash([]); ctx.moveTo(lrX - crossSize / 2, y); ctx.lineTo(lrX + crossSize / 2, y); ctx.moveTo(lrX, y - crossSize / 2); ctx.lineTo(lrX, y + crossSize / 2); ctx.stroke(); } ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText(lr.toString(), lrX + labelOffset, y); ctx.restore(); } });
+            ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+
+            ctx.textAlign = 'left';
+            probTicks.forEach(p => { const y = probToY_HighProbLowY(p); ctx.beginPath(); ctx.moveTo(postTestX - tickLength / 2, y); ctx.lineTo(postTestX + tickLength / 2, y); ctx.stroke(); ctx.fillText(formatProbLabel(p), postTestX + labelOffset + tickLength / 2, y + (fontSize / 2.5)); });
+
+            ctx.font = `bold ${titleFontSize}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            const titleY = padding.top - titleFontSize * 0.8; // Increased from 0.5 to 0.8 to move labels up
+            const titleLineSpacing = titleFontSize * 1.2;
+            ctx.fillText('Probability', preTestX, titleY); ctx.fillText('Pre-test', preTestX, titleY - titleLineSpacing);
+            ctx.fillText('Ratio', lrX, titleY); ctx.fillText('Likelihood', lrX, titleY - titleLineSpacing);
+            ctx.fillText('Probability', postTestX, titleY); ctx.fillText('Post-test', postTestX, titleY - titleLineSpacing);
+            ctx.textBaseline = 'alphabetic';
+
+            const currentPreTestProb = preProbDecimal;
+            const plotPostProb = postProbDecimal;
+            const isExcludedByArg = isExcluded;
+
+            const preY = probToY_HighProbHighY(currentPreTestProb);
+            let postY;
+            if (isExcludedByArg) {
+                postY = probToY_HighProbLowY(axisMinProb);
+            } else {
+                postY = probToY_HighProbLowY(plotPostProb);
+            }
+
+            if (isFinite(preY) && isFinite(postY)) {
+                ctx.beginPath();
+                ctx.moveTo(preTestX, preY);
+                ctx.lineTo(postTestX, postY);
+
+                const colorProb = isExcludedByArg ? axisMinProb : plotPostProb;
+                ctx.strokeStyle = colorProb >= 0.002 ? '#cc0000' : '#00cc00';
+                ctx.lineWidth = Math.max(1.5, 2 * scaleFactor);
+
+                ctx.setLineDash(isExcludedByArg ? [Math.max(3, 5 * scaleFactor), Math.max(3, 5 * scaleFactor)] : []);
+
+                ctx.stroke();
+
+                ctx.setLineDash([]);
+                ctx.lineWidth = Math.max(1, 1.5 * scaleFactor);
+                ctx.strokeStyle = '#555';
+            } else {
+                console.warn("Skipping line draw due to invalid Y coordinates.", {preY, postY});
+            }
+        }
+        // --- End of Nomogram Drawing ---
+
+        // --- Debounce Function ---
+        function debounce(func, wait, immediate) {
+            var timeout;
+            return function() {
+                var context = this, args = arguments;
+                var later = function() {
+                    timeout = null;
+                    if (!immediate) func.apply(context, args);
+                };
+                var callNow = immediate && !timeout;
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+                if (callNow) func.apply(context, args);
+            };
         };
-    };
-    // --- End of debounce function ---
+        // --- End of Debounce ---
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // --- Get DOM Elements ---
-      const preO = document.getElementById('pretest-output-text');
-      const postO = document.getElementById('posttest-prob-text');
-      const pr = document.getElementById('presentation-range');
-      const pt = document.getElementById('presentation-time-text');
-      const oA = document.getElementById('asah-only');
-      const oD = document.getElementById('adjust-delay');
-      const oC = document.getElementById('max-conservative');
-      const pl = document.getElementById('postlp-control');
-      const plp = document.getElementById('postlp-text');
-      const plf = document.getElementById('postlp-fpr-text');
-      const lpSection = document.getElementById('lp-section');
-      const fS = Array.from(document.querySelectorAll('select.finding'));
-      const lpS = ['lp-spectro', 'lp-rbc', 'lp-visual'].map(id => document.getElementById(id)).filter(e => e);
+        // --- Global State Variables ---
+        let lpWasVisible = false; // Track visibility for scroll animation
+        let plWasVisible = false; // Track visibility for scroll animation
+        let inJiggle = false; // Track if jiggle mode is active
+        let longPressTimer; // Define timer globally for jiggle mode entry
 
-      // --- Initial DOM Check ---
-      if (!preO || !postO || !pr || !pt || !oA || !oD || !oC || !pl || !plp || !plf || !lpSection || fS.length === 0) {
-          console.error("Initialization failed: One or more essential DOM elements not found.");
-          const appMain = document.querySelector('#app main');
-          if (appMain) appMain.innerHTML = "<p style='color: red; padding: 1rem;'>Error: Application components could not be loaded.</p>";
-          return;
-      }
+        // --- DOM Ready Event Listener ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Get DOM Elements ---
+            const preO = document.getElementById('pretest-output-text');
+            const postO = document.getElementById('posttest-prob-text');
+            const pr = document.getElementById('presentation-range');
+            const pt = document.getElementById('presentation-time-text');
+            const oA = document.getElementById('asah-only');
+            const oD = document.getElementById('adjust-delay');
+            const oC = document.getElementById('max-conservative');
+            const pl = document.getElementById('postlp-control');
+            const plp = document.getElementById('postlp-text');
+            const plf = document.getElementById('postlp-fpr-text');
+            const lpSection = document.getElementById('lp-section');
+            const lpS = ['lp-spectro', 'lp-rbc', 'lp-visual'].map(id => document.getElementById(id)).filter(e => e); // LP selects
 
-      // --- Constants ---
-      const baseP = 7.5;
-      const LR = { 'Worst headache':{yes:1.25,no:0.24},'Thunderclap':{yes:1.34,no:0.74},'Exertion at onset':{yes:1.70,no:0.88}, 'Loss of consciousness':{yes:1.87,no:0.91},'Blurred vision':{yes:3.14,no:0.85},'Awoke from sleep':{yes:0.63,no:1.09}, 'Onset during intercourse':{yes:1.20,no:1.00},'Nausea':{yes:1.15,no:0.74},'Neck stiffness (subjective)':{yes:4.12,no:0.73}, 'Meningism':{yes:6.59,no:0.78},'Vomiting':{yes:1.92,no:0.52},'Unable to walk':{yes:2.36,no:0.85}, 'Altered mental status':{yes:2.18,no:0.87},'Focal neuro deficit':{yes:3.26,no:0.81}};
-      const T = ['<6 hrs','6-12 hrs','12-24 hrs','24-48 hrs','48-72 hrs','72-96 hrs'];
-      const sens = { '<6 hrs':{sah:[1,0.983],asah:[1,0.98]},'6-12 hrs':{sah:[0.992,0.972],asah:[1,0.982]}, '12-24 hrs':{sah:[0.993,0.975],asah:[1,0.983]},'24-48 hrs':{sah:[0.99,0.971],asah:[0.996,0.976]}, '48-72 hrs':{sah:[0.99,0.972],asah:[0.996,0.976]},'72-96 hrs':{sah:[0.978,0.955],asah:[0.987,0.964]}};
-      const oddsT = { '<6 hrs':{sah:2.074,asah:2.667},'6-12 hrs':{sah:0.482,asah:0.375}, '12-24 hrs':{sah:0.282,asah:0.252},'24-48 hrs':{sah:0.153,asah:0.155}, '48-72 hrs':{sah:0.107,asah:0.105},'72-96 hrs':{sah:0.081,asah:0.095}};
-      const lpLR = { 'UK Spectro xanthochromia':{positive:15.23,negative:0.13}, 'CSF RBC >1000 (x10^6)':{positive:5.66,negative:0.21}, 'Visual xanthochromia':{positive:12.56,negative:0.30}};
-      const probToOdds = p => p / (1 - p); // Utility needed in recalc
-
-      // --- Helper for Text Formatting ---
-      function formatProbabilityText(probDecimal) {
-          if (typeof probDecimal !== 'number' || !isFinite(probDecimal) || probDecimal < 0) {
-              return "Invalid"; // Handle non-numbers or negative probs
-          }
-          if (probDecimal < 0.00001) { // Use a smaller threshold for display
-              return "<0.01%"; // Represent very small numbers clearly
-          }
-          if (probDecimal < 0.01) { // Less than 1%
-              const denominator = 1 / probDecimal;
-              // Check if denominator is finite and positive before rounding
-              if (isFinite(denominator) && denominator > 0) {
-                   return '~1 in ' + Math.round(denominator).toLocaleString();
-              } else {
-                   return "<1%"; // Fallback if 1/prob fails
-              }
-          }
-          // Otherwise, show percentage with one decimal place
-          return (probDecimal * 100).toFixed(1) + '%';
-      }
-
-      // --- Setup Initial State ---
-      pr.value = 0;
-      pt.textContent = T[0];
-
-      function timeK() { return T[parseInt(pr.value, 10)] || T[0]; }
-
-      // --- Main Recalculation Function ---
-      function recalc() {
-        try {
-            // 1. Calculate Initial Odds from BaseP and Findings
-            let initial_odds;
-            if (baseP <= 0 || baseP >= 100) {
-                 initial_odds = (baseP <=0) ? 1e-10 : 1e10; // Avoid division by zero/inf
-            } else {
-                 initial_odds = baseP / (100 - baseP);
+            // --- Initial DOM Check ---
+            if (!preO || !postO || !pr || !pt || !oA || !oD || !oC || !pl || !plp || !plf || !lpSection) {
+                console.error("Initialization failed: One or more essential DOM elements not found.");
+                const appMain = document.querySelector('#app main');
+                if (appMain) appMain.innerHTML = "<p style='color: red; padding: 1rem;'>Error: Application components could not be loaded.</p>";
+                return;
             }
 
-            fS.forEach(s => {
-                const findingKey = s.dataset.key;
-                const findingValue = s.value;
-                // Check data exists and value is not empty string
-                if (findingKey && findingValue && LR[findingKey] && typeof LR[findingKey][findingValue] === 'number' && isFinite(LR[findingKey][findingValue])) {
-                     initial_odds *= LR[findingKey][findingValue];
-                } else if (findingValue !== "" && findingValue !== "yes" && findingValue !== "no") {
-                     console.warn(`Unknown finding value '${findingValue}' for key '${findingKey}'`);
+            // --- Constants for Calculation ---
+            const baseP = 7.5;
+            const LR = { 'Worst headache':{yes:1.25,no:0.24},'Thunderclap':{yes:1.34,no:0.74},'Exertion at onset':{yes:1.70,no:0.88}, 'Loss of consciousness':{yes:1.87,no:0.91},'Blurred vision':{yes:3.14,no:0.85},'Awoke from sleep':{yes:0.63,no:1.09}, 'Onset during intercourse':{yes:1.20,no:1.00},'Nausea':{yes:1.15,no:0.74},'Neck stiffness (subjective)':{yes:4.12,no:0.73}, 'Meningism':{yes:6.59,no:0.78},'Vomiting':{yes:1.92,no:0.52},'Unable to walk':{yes:2.36,no:0.85}, 'Altered mental status':{yes:2.18,no:0.87},'Focal neuro deficit':{yes:3.26,no:0.81}};
+            const T = ['<6 hrs','6-12 hrs','12-24 hrs','24-48 hrs','48-72 hrs','72-96 hrs'];
+            const sens = { '<6 hrs':{sah:[1,0.983],asah:[1,0.98]},'6-12 hrs':{sah:[0.992,0.972],asah:[1,0.982]}, '12-24 hrs':{sah:[0.993,0.975],asah:[1,0.983]},'24-48 hrs':{sah:[0.99,0.971],asah:[0.996,0.976]}, '48-72 hrs':{sah:[0.99,0.972],asah:[0.996,0.976]},'72-96 hrs':{sah:[0.978,0.955],asah:[0.987,0.964]}};
+            const oddsT = { '<6 hrs':{sah:2.074,asah:2.667},'6-12 hrs':{sah:0.482,asah:0.375}, '12-24 hrs':{sah:0.282,asah:0.252},'24-48 hrs':{sah:0.153,asah:0.155}, '48-72 hrs':{sah:0.107,asah:0.105},'72-96 hrs':{sah:0.081,asah:0.095}};
+            const lpLR = { 'UK Spectro xanthochromia':{positive:15.23,negative:0.13}, 'CSF RBC >1000 (x10^6)':{positive:5.66,negative:0.21}, 'Visual xanthochromia':{positive:12.56,negative:0.30}};
+            const probToOdds = p => p / (1 - p);
+
+            // --- Helper for Formatting Probability Text ---
+            function formatProbabilityText(probDecimal) {
+                if (typeof probDecimal !== 'number' || !isFinite(probDecimal) || probDecimal < 0) return "Invalid";
+                if (probDecimal < 0.00001) return "<0.01%";
+                if (probDecimal < 0.01) {
+                    const denominator = 1 / probDecimal;
+                    return isFinite(denominator) && denominator > 0 ? `~1 in ${Math.round(denominator).toLocaleString()}` : "<1%";
                 }
-            });
-
-            // Clamp initial odds
-            initial_odds = Math.max(1e-10, Math.min(initial_odds, 1e10));
-
-            // 2. Calculate and Display Pre-Test Probability
-            const preP_decimal = initial_odds / (1 + initial_odds);
-            preO.textContent = formatProbabilityText(preP_decimal); // Use helper
-
-            // 3. Adjust Odds for Time Delay
-            let current_odds = initial_odds;
-            const analysis_type = oA.checked ? 'asah' : 'sah';
-            const time_key = timeK();
-
-            // Check data exists before using time adjustment factor
-            if (oD.checked && oddsT[time_key] && typeof oddsT[time_key][analysis_type] === 'number' && isFinite(oddsT[time_key][analysis_type])) {
-                current_odds *= oddsT[time_key][analysis_type];
+                return `${(probDecimal * 100).toFixed(1)}%`;
             }
 
-            // Clamp odds again
-            current_odds = Math.max(1e-10, Math.min(current_odds, 1e10));
+            // --- Setup Initial State ---
+            pr.value = 0;
+            pt.textContent = T[0];
+            function timeK() { return T[parseInt(pr.value, 10)] || T[0]; }
 
-            // 4. Get Sensitivity
-            let sensitivity = 0; // Default sensitivity if data missing
-            if (sens[time_key] && sens[time_key][analysis_type] && Array.isArray(sens[time_key][analysis_type]) && sens[time_key][analysis_type].length === 2) {
-                 const [sens_normal, sens_conservative] = sens[time_key][analysis_type];
-                 // Check if values are valid numbers
-                 if (typeof sens_normal === 'number' && isFinite(sens_normal) && typeof sens_conservative === 'number' && isFinite(sens_conservative)) {
-                      sensitivity = oC.checked ? sens_conservative : sens_normal;
-                 } else {
-                      console.error(`Invalid sensitivity values for time: ${time_key}, type: ${analysis_type}`, sens[time_key][analysis_type]);
-                      throw new Error("Invalid sensitivity data encountered."); // Stop calculation if data is bad
-                 }
-            } else {
-                 console.error(`Sensitivity data missing or invalid for time: ${time_key}, type: ${analysis_type}`);
-                 throw new Error("Missing sensitivity data."); // Stop calculation if data missing
-            }
+            // --- Main Recalculation Function ---
+            function recalc() {
+                // console.log("Recalc triggered"); // Optional: Confirm recalc runs
+                try {
+                    // 1. Calculate Initial Odds
+                    let initial_odds = (baseP <= 0 || baseP >= 100) ? (baseP <= 0 ? 1e-10 : 1e10) : baseP / (100 - baseP);
+                    // Query dynamically for finding elements (select or segment group)
+                    document.querySelectorAll('.finding').forEach(el => {
+                        const findingKey = el.dataset.key;
+                        let findingValue = ''; // Default to unknown
 
-            // Ensure sensitivity is within [0, 1] range
-             sensitivity = Math.max(0, Math.min(sensitivity, 1));
+                        if (el.tagName === 'SELECT') {
+                            findingValue = el.value;
+                        } else if (el.classList.contains('segment-group')) {
+                            const selectedSeg = el.querySelector('.segment.selected');
+                            if (selectedSeg) {
+                                const text = selectedSeg.textContent.toLowerCase();
+                                findingValue = text === 'yes' ? 'yes' : (text === 'no' ? 'no' : '');
+                            }
+                        }
+                        // console.log(`Finding: ${findingKey}, Value: ${findingValue}`); // Optional: Check values read
 
+                        // Apply LR if valid
+                        if (findingKey && findingValue && LR[findingKey]?.[findingValue]) {
+                             if (typeof LR[findingKey][findingValue] === 'number' && isFinite(LR[findingKey][findingValue])) {
+                                initial_odds *= LR[findingKey][findingValue];
+                             } else {
+                                 console.warn(`Invalid LR value for key: ${findingKey}, value: ${findingValue}`);
+                             }
+                        } else if (findingValue !== "" && findingValue !== "yes" && findingValue !== "no") {
+                            // Only warn for unexpected non-empty values
+                            // console.warn(`Unknown or missing finding value '${findingValue}' for key '${findingKey}'`);
+                        }
+                    });
+                    initial_odds = Math.max(1e-10, Math.min(initial_odds, 1e10));
 
-            // 5. Calculate Post-CT based on Sensitivity
-            let isExcluded = false;
-            let postCT_odds;
-            let postCT_prob_decimal;
-            let finalPostProbForPlotting;
-            const epsilon = 1e-9; // Tolerance for checking sensitivity == 1
+                    // 2. Pre-Test Probability
+                    const preP_decimal = initial_odds / (1 + initial_odds);
+                    preO.textContent = formatProbabilityText(preP_decimal);
 
-            if (sensitivity >= (1.0 - epsilon)) {
-                isExcluded = true;
-                postO.textContent = (oA.checked ? 'aSAH' : 'SAH') + ' excluded'; // Use direct text
-                postCT_prob_decimal = 0.00001; // Min value for plotting
-                postCT_odds = probToOdds(postCT_prob_decimal);
-                finalPostProbForPlotting = postCT_prob_decimal;
-                lpSection.style.display = 'none';
-                lpS.forEach(s => s.value = 'na');
-            } else {
-                isExcluded = false;
-                postCT_odds = current_odds * (1 - sensitivity);
-
-                // Clamp post-CT odds
-                postCT_odds = Math.max(1e-10, Math.min(postCT_odds, 1e10));
-                postCT_prob_decimal = postCT_odds / (1 + postCT_odds);
-
-                postO.textContent = formatProbabilityText(postCT_prob_decimal); // Use helper
-                finalPostProbForPlotting = postCT_prob_decimal;
-                lpSection.style.display = '';
-            }
-
-            // 6. LP Calculation
-            let combined_lp_lr = 1, lp_test_selected = false;
-            let postLP_prob_decimal = postCT_prob_decimal; // Default to post-CT if no LP selected
-
-            if (!isExcluded) {
-                lpS.forEach(s => {
-                    const lpKey = s.dataset.key;
-                    const lpValue = s.value;
-                    // Check if value is positive/negative and data exists
-                    if ((lpValue === 'positive' || lpValue === 'negative') && lpKey && lpLR[lpKey] && typeof lpLR[lpKey][lpValue] === 'number' && isFinite(lpLR[lpKey][lpValue])) {
-                         lp_test_selected = true;
-                         combined_lp_lr *= lpLR[lpKey][lpValue];
-                    } else if (lpValue !== 'na') {
-                         // Only warn if a non-NA value is selected but data is missing/invalid
-                         console.warn(`LP LR data missing or invalid for key: ${lpKey}, value: ${lpValue}`);
+                    // 3. Adjust Odds for Time Delay
+                    let current_odds = initial_odds;
+                    const analysis_type = oA.checked ? 'asah' : 'sah';
+                    const time_key = timeK();
+                    if (oD.checked && oddsT[time_key]?.[analysis_type]) {
+                         if (typeof oddsT[time_key][analysis_type] === 'number' && isFinite(oddsT[time_key][analysis_type])) {
+                             current_odds *= oddsT[time_key][analysis_type];
+                         } else {
+                              console.warn(`Invalid odds adjustment factor for time: ${time_key}, type: ${analysis_type}`);
+                         }
                     }
+                    current_odds = Math.max(1e-10, Math.min(current_odds, 1e10));
+
+                    // 4. Get CT Sensitivity
+                    let sensitivity = 0;
+                    if (sens[time_key]?.[analysis_type]?.length === 2) {
+                        const [sens_normal, sens_conservative] = sens[time_key][analysis_type];
+                        if (typeof sens_normal === 'number' && isFinite(sens_normal) && typeof sens_conservative === 'number' && isFinite(sens_conservative)) {
+                            sensitivity = oC.checked ? sens_conservative : sens_normal;
+                        } else {
+                            console.error(`Invalid sensitivity values for time: ${time_key}, type: ${analysis_type}`, sens[time_key][analysis_type]);
+                            throw new Error("Invalid sensitivity data.");
+                        }
+                    } else {
+                        console.error(`Sensitivity data missing or invalid for time: ${time_key}, type: ${analysis_type}`);
+                        throw new Error("Missing sensitivity data.");
+                    }
+                    sensitivity = Math.max(0, Math.min(sensitivity, 1));
+
+                    // 5. Post-CT Probability
+                    let isExcluded = false;
+                    let postCT_odds;
+                    let postCT_prob_decimal;
+                    let finalPostProbForPlotting;
+                    const epsilon = 1e-9;
+
+                    if (sensitivity >= (1.0 - epsilon)) {
+                        isExcluded = true;
+                        postO.textContent = `${oA.checked ? 'aSAH' : 'SAH'} excluded`;
+                        postCT_prob_decimal = 0.00001;
+                        postCT_odds = probToOdds(postCT_prob_decimal);
+                        finalPostProbForPlotting = postCT_prob_decimal;
+                        lpSection.style.display = 'none';
+                        lpS.forEach(s => s.value = 'na');
+                    } else {
+                        isExcluded = false;
+                        postCT_odds = current_odds * (1 - sensitivity);
+                        postCT_odds = Math.max(1e-10, Math.min(postCT_odds, 1e10));
+                        postCT_prob_decimal = postCT_odds / (1 + postCT_odds);
+                        postO.textContent = formatProbabilityText(postCT_prob_decimal);
+                        finalPostProbForPlotting = postCT_prob_decimal;
+                        lpSection.style.display = '';
+
+                        const lpNowVisible = lpSection.style.display !== 'none';
+                        if (lpNowVisible && !lpWasVisible) {
+                            const mobile = window.innerWidth <= 767;
+                            setTimeout(() => {
+                                if (mobile) {
+                                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                                } else {
+                                    lpSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                            }, 50);
+                        }
+                        lpWasVisible = lpNowVisible;
+                    }
+
+                    // 6. LP Calculation
+                    let combined_lp_lr = 1, lp_test_selected = false;
+                    let postLP_prob_decimal = postCT_prob_decimal;
+
+                    if (!isExcluded) {
+                        lpS.forEach(s => {
+                            const lpKey = s.dataset.key;
+                            const lpValue = s.value;
+                            if ((lpValue === 'positive' || lpValue === 'negative') && lpKey && lpLR[lpKey]?.[lpValue]) {
+                                if (typeof lpLR[lpKey][lpValue] === 'number' && isFinite(lpLR[lpKey][lpValue])) {
+                                    lp_test_selected = true;
+                                    combined_lp_lr *= lpLR[lpKey][lpValue];
+                                } else {
+                                     console.warn(`Invalid LP LR data for key: ${lpKey}, value: ${lpValue}`);
+                                }
+                            } else if (lpValue !== 'na') {
+                                // console.warn(`LP LR data missing for key: ${lpKey}, value: ${lpValue}`);
+                            }
+                        });
+                    }
+
+                    if (lp_test_selected && !isExcluded) {
+                        pl.style.display = '';
+                        const plNowVisible = pl.style.display !== 'none';
+                        if (plNowVisible && !plWasVisible) {
+                            const mobile = window.innerWidth <= 767;
+                            setTimeout(() => {
+                                if (mobile) {
+                                    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                                } else {
+                                    pl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                                }
+                            }, 50);
+                        }
+                        plWasVisible = plNowVisible;
+
+                        const postLP_odds = postCT_odds * combined_lp_lr;
+                        const clamped_postLP_odds = Math.max(1e-10, Math.min(postLP_odds, 1e10));
+                        postLP_prob_decimal = clamped_postLP_odds / (1 + clamped_postLP_odds);
+
+                        plp.textContent = formatProbabilityText(postLP_prob_decimal);
+                        const fpr_percent = 100 - (postLP_prob_decimal * 100);
+                        plf.textContent = isFinite(fpr_percent) ? `${fpr_percent.toFixed(1)}%` : '--';
+                        finalPostProbForPlotting = postLP_prob_decimal;
+                    } else {
+                        pl.style.display = 'none';
+                        plp.textContent = '--';
+                        plf.textContent = '--';
+                        plWasVisible = false;
+                    }
+
+                    // 7. Draw Nomogram
+                    const axisMinProb = 0.0001;
+                    const axisMaxProb = 0.9999;
+                    const clampedPreP = Math.max(axisMinProb, Math.min(preP_decimal, axisMaxProb));
+                    let finalPostProbValue = finalPostProbForPlotting;
+                    if (typeof finalPostProbValue !== 'number' || !isFinite(finalPostProbValue)) {
+                        console.warn("finalPostProbForPlotting was invalid, defaulting to minimum.", finalPostProbForPlotting);
+                        finalPostProbValue = axisMinProb;
+                    }
+                    const clampedPostP = Math.max(axisMinProb, Math.min(finalPostProbValue, axisMaxProb));
+
+                    if (typeof drawNomogram === 'function') {
+                        drawNomogram(clampedPreP, clampedPostP, isExcluded);
+                    } else {
+                        console.error("drawNomogram function is not defined.");
+                    }
+
+                } catch (error) {
+                    console.error("------------------------------------");
+                    console.error("Error during recalc:", error.message);
+                    if (error.stack) console.error("Stack Trace:", error.stack);
+                    console.error("------------------------------------");
+                    if (postO) postO.textContent = "Error!";
+                    if (preO) preO.textContent = "Error!";
+                    const canvas = document.getElementById('nomogram-canvas');
+                    if (canvas) {
+                        const ctx = canvas.getContext('2d');
+                        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    }
+                }
+            } // --- End of recalc ---
+
+            // --- Event Listeners Setup ---
+            const debouncedRecalc = debounce(recalc, 150);
+
+            pr.addEventListener('input', () => {
+                pt.textContent = timeK();
+                recalc();
+            });
+            [oA, oD, oC].forEach(e => e && e.addEventListener('change', recalc));
+            lpS.forEach(s => s.addEventListener('change', recalc));
+
+            // --- Resize Handling ---
+            const nomogramContainer = document.getElementById('nomogram');
+            if (nomogramContainer) {
+                const resizeObserver = new ResizeObserver(entries => {
+                    if (entries[0].contentRect.width > 0 && entries[0].contentRect.height > 0) {
+                        debouncedRecalc();
+                    }
+                });
+                resizeObserver.observe(nomogramContainer);
+            }
+            window.addEventListener('resize', debouncedRecalc);
+
+            // --- Initial Calculation ---
+            setTimeout(recalc, 50);
+
+            // --- Jiggle Mode Logic ---
+
+            // Variables for vertical swipe functionality
+            let touchStartY = 0;
+            let lastTouchY = 0;
+            let touchStartX = 0;
+            let isSwiping = false;
+            let lastTouchedSegmentIndex = -1;
+            let touchedGroups = new Set(); // Track which groups have been touched in a swipe
+            
+            // Function to prevent scrolling during jiggle mode
+            function preventScroll(e) {
+                if (inJiggle) {
+                    e.preventDefault();
+                }
+            }
+            
+            // Function to handle touch start in jiggle mode
+            function handleTouchStart(e) {
+                if (inJiggle) {
+                    touchStartY = e.touches[0].clientY;
+                    touchStartX = e.touches[0].clientX;
+                    lastTouchY = touchStartY;
+                    isSwiping = false;
+                    touchedGroups.clear(); // Reset the set of touched groups
+                    lastTouchedSegmentIndex = -1; // Reset the last touched segment index
+                }
+            }
+            
+            // Function to handle touch move in jiggle mode
+            function handleTouchMove(e) {
+                if (!inJiggle) return;
+                
+                const currentY = e.touches[0].clientY;
+                const currentX = e.touches[0].clientX;
+                
+                // Determine if we're in a vertical swipe
+                if (!isSwiping && Math.abs(currentY - touchStartY) > 10) {
+                    isSwiping = true;
+                }
+                
+                if (isSwiping) {
+                    // Get all segment groups in jiggle mode
+                    const segmentGroups = document.querySelectorAll('.segment-group.finding.jiggle-mode');
+                    
+                    // Determine which segment to select based on horizontal position
+                    // Use the horizontal position from the current touch point
+                    const segmentWidth = segmentGroups[0]?.getBoundingClientRect().width / 3 || 33; // 3 segments (No, ???, Yes)
+                    
+                    let segmentIndex;
+                    // Calculate relative X position for any group (they should all have the same width)
+                    const relativeX = currentX - (segmentGroups[0]?.getBoundingClientRect().left || 0);
+                    
+                    if (relativeX < segmentWidth) {
+                        segmentIndex = 0; // No
+                    } else if (relativeX < segmentWidth * 2) {
+                        segmentIndex = 1; // Unknown ('???')
+                    } else {
+                        segmentIndex = 2; // Yes
+                    }
+                    
+                    // Only update if the segment index has changed
+                    if (segmentIndex !== lastTouchedSegmentIndex) {
+                        lastTouchedSegmentIndex = segmentIndex;
+                        
+                        // Calculate the vertical range of the swipe
+                        const minY = Math.min(touchStartY, currentY, lastTouchY) - 30; // Add more padding
+                        const maxY = Math.max(touchStartY, currentY, lastTouchY) + 30; // Add more padding
+                        
+                        // Apply the same selection to all segment groups in the vertical path
+                        segmentGroups.forEach(group => {
+                            const groupRect = group.getBoundingClientRect();
+                            
+                            // Check if this group is in the horizontal path (X-axis alignment)
+                            const horizontalMatch = currentX >= groupRect.left && currentX <= groupRect.right;
+                            
+                            // Check if this group is in the vertical swipe path
+                            const verticalMatch = 
+                                (groupRect.top >= minY && groupRect.top <= maxY) || // Top edge in range
+                                (groupRect.bottom >= minY && groupRect.bottom <= maxY) || // Bottom edge in range
+                                (groupRect.top <= minY && groupRect.bottom >= maxY); // Group spans the entire range
+                            
+                            // If the group is in both the horizontal and vertical path of the swipe
+                            if (horizontalMatch && verticalMatch) {
+                                // Add to our set of touched groups
+                                touchedGroups.add(group);
+                                
+                                // Select the appropriate segment
+                                const segments = group.querySelectorAll('.segment');
+                                if (segments[segmentIndex] && !segments[segmentIndex].classList.contains('selected')) {
+                                    group.querySelectorAll('.segment').forEach(s => s.classList.remove('selected'));
+                                    segments[segmentIndex].classList.add('selected');
+                                    recalc();
+                                }
+                            }
+                        });
+                    }
+                }
+                
+                lastTouchY = currentY;
+            }
+            
+            function enterJiggleMode() {
+                if (inJiggle) return;
+                // console.log("Entering Jiggle Mode");
+                inJiggle = true;
+                document.documentElement.classList.add('jiggle-active');
+                window.getSelection()?.removeAllRanges();
+                
+                // Add touch event listeners to prevent scrolling and enable vertical swipe
+                const mainElement = document.querySelector('#app main');
+                mainElement.addEventListener('touchstart', handleTouchStart, { passive: false });
+                mainElement.addEventListener('touchmove', handleTouchMove, { passive: false });
+                mainElement.addEventListener('touchmove', preventScroll, { passive: false });
+                
+                // Reset swipe tracking variables
+                lastTouchedSegmentIndex = -1;
+                isSwiping = false;
+
+                const cfTitle = Array.from(document.querySelectorAll('.section-title'))
+                                  .find(el => el.textContent.includes('Clinical Findings'));
+
+                // Replace selects with segment groups, preserving the value
+                document.querySelectorAll('select.finding').forEach(drop => {
+                    const currentVal = drop.value; // Get value BEFORE replacing
+                    const wrap = document.createElement('div');
+                    wrap.className = 'segment-group jiggle-mode finding'; // Add 'finding' class
+                    wrap.dataset.key = drop.dataset.key;
+
+                    [['no', 'No'], ['', '???'], ['yes', 'Yes']].forEach(([val, label]) => {
+                        const seg = document.createElement('div');
+                        seg.className = 'segment';
+                        seg.textContent = label;
+                        if (val === currentVal) {
+                            seg.classList.add('selected');
+                        }
+
+                        // --- Segment Interaction Listeners ---
+                        seg.addEventListener('pointerdown', e => {
+                            // For touch, only prevent default scroll/selection behavior on initial press.
+                            // Value change happens on pointerenter (drag) or pointerup (tap).
+                            if (e.pointerType === 'touch') {
+                                e.preventDefault();
+                                // Explicitly capture pointer to handle drag correctly
+                                seg.setPointerCapture(e.pointerId);
+                            }
+                            // Handle mouse clicks directly on pointerdown (immediate change)
+                            else if (inJiggle && e.pointerType === 'mouse' && e.button === 0) {
+                                if (!seg.classList.contains('selected')) {
+                                    wrap.querySelectorAll('.segment').forEach(s => s.classList.remove('selected'));
+                                    seg.classList.add('selected');
+                                    recalc(); // Recalculate on mouse click
+                                }
+                            }
+                        });
+                        seg.addEventListener('pointerenter', e => {
+                            // Handle touch drag *over* segments (swipe interaction)
+                            // Check if pointer is down (dragging)
+                            if (inJiggle && e.pointerType === 'touch' && e.buttons === 1) {
+                                if (!seg.classList.contains('selected')) {
+                                    wrap.querySelectorAll('.segment').forEach(s => s.classList.remove('selected'));
+                                    seg.classList.add('selected');
+                                    recalc(); // Recalculate immediately as finger swipes over
+                                }
+                            }
+                        });
+                         seg.addEventListener('pointerup', e => {
+                             // Handle touch release (tap or end of drag)
+                             if (inJiggle && e.pointerType === 'touch') {
+                                 // Release pointer capture
+                                 if (seg.hasPointerCapture(e.pointerId)) {
+                                     seg.releasePointerCapture(e.pointerId);
+                                 }
+                                 // Ensure the segment under the finger on release is selected
+                                 // This handles the case of a simple tap without dragging
+                                 const elementUnderPointer = document.elementFromPoint(e.clientX, e.clientY);
+                                 const targetSegment = elementUnderPointer?.closest('.segment');
+                                 if (targetSegment === seg && !seg.classList.contains('selected')) {
+                                     wrap.querySelectorAll('.segment').forEach(s => s.classList.remove('selected'));
+                                     seg.classList.add('selected');
+                                     recalc(); // Recalculate on release
+                                 }
+                                 // If drag ended outside, the last 'pointerenter' selection remains.
+                             }
+                         });
+                        // --- End Segment Interaction ---
+
+                        wrap.appendChild(seg);
+                    });
+                    drop.replaceWith(wrap); // Replace select with the segment group
+                });
+
+                // Scroll to "Clinical Findings"
+                setTimeout(() => {
+                    if (cfTitle) {
+                        const mobile = window.innerWidth <= 767;
+                        if (mobile) {
+                            cfTitle.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        } else {
+                            const mainPanel = document.querySelector('#app main');
+                            if (mainPanel) {
+                                const panelTop = mainPanel.getBoundingClientRect().top;
+                                const titleTop = cfTitle.getBoundingClientRect().top;
+                                const scrollTopTarget = titleTop - panelTop + mainPanel.scrollTop - 10;
+                                mainPanel.scrollTo({ top: scrollTopTarget, behavior: 'smooth' });
+                            }
+                        }
+                    }
+                }, 100);
+            }
+
+            function exitJiggleMode() {
+                if (!inJiggle) return;
+                // console.log("Exiting Jiggle Mode");
+                inJiggle = false;
+                document.documentElement.classList.remove('jiggle-active');
+                
+                // Remove touch event listeners when exiting jiggle mode
+                const mainElement = document.querySelector('#app main');
+                if (mainElement) {
+                    mainElement.removeEventListener('touchstart', handleTouchStart, { passive: false });
+                    mainElement.removeEventListener('touchmove', handleTouchMove, { passive: false });
+                    mainElement.removeEventListener('touchmove', preventScroll, { passive: false });
+                }
+                
+                // Reset swipe tracking variables
+                isSwiping = false;
+                lastTouchedSegmentIndex = -1;
+                touchedGroups.clear(); // Clear the set of touched groups
+
+                // Replace segment groups back with selects, preserving the value
+                document.querySelectorAll('.segment-group.finding').forEach(wrap => {
+                    const selectedSeg = wrap.querySelector('.segment.selected');
+                    let finalValue = ''; // Default to Unknown
+                    if (selectedSeg) {
+                        const text = selectedSeg.textContent.toLowerCase();
+                        finalValue = text === 'yes' ? 'yes' : (text === 'no' ? 'no' : '');
+                    }
+                    // console.log(`Exiting: Key=${wrap.dataset.key}, Value=${finalValue}`); // Optional debug
+
+                    const select = document.createElement('select');
+                    select.className = 'finding';
+                    select.dataset.key = wrap.dataset.key;
+
+                    // Recreate options and set selected based on finalValue
+                    [['', 'Unknown'], ['yes', 'Yes'], ['no', 'No']].forEach(([val, lbl]) => {
+                        const opt = document.createElement('option');
+                        opt.value = val;
+                        opt.text = lbl;
+                        if (val === finalValue) {
+                            opt.selected = true; // Set the selected attribute
+                        }
+                        select.appendChild(opt);
+                    });
+
+                    // *** Attach listeners DIRECTLY to the new select element ***
+                    addJiggleEntryListeners(select); // Attach listeners for entering jiggle mode again
+                    select.addEventListener('change', recalc); // *** Attach the crucial change listener ***
+
+                    wrap.replaceWith(select); // Replace segment group with the NEW select
+                });
+
+                // No need to call attachJiggleListeners() globally here
+                // Recalculate AFTER selects are replaced and listeners attached
+                recalc();
+            }
+
+            // --- Helper function to add jiggle mode ENTRY listeners ---
+            // (Separated for clarity and reusability in exitJiggleMode)
+            function addJiggleEntryListeners(element) {
+                 clearTimeout(longPressTimer); // Clear any pending timer
+
+                 // Touch Long Press Listener
+                 element.addEventListener('touchstart', e => {
+                     if (inJiggle) return;
+                     clearTimeout(longPressTimer); // Clear just in case
+                     longPressTimer = setTimeout(() => {
+                         e.preventDefault();
+                         enterJiggleMode();
+                     }, 500);
+                 }, { passive: false });
+
+                 // Touch End/Move Listeners to clear timer
+                 ['touchend', 'touchmove', 'touchcancel'].forEach(ev => {
+                     element.addEventListener(ev, () => clearTimeout(longPressTimer));
+                 });
+
+                 // Desktop Cmd/Ctrl + Click Listener
+                 element.addEventListener('mousedown', e => {
+                     if (!inJiggle && e.button === 0 && (e.metaKey || e.ctrlKey)) {
+                         e.preventDefault();
+                         enterJiggleMode();
+                     }
+                 });
+            }
+
+
+            // --- Function to attach initial listeners on load ---
+            function attachInitialListeners() {
+                // console.log("Attaching initial listeners");
+                document.querySelectorAll('select.finding').forEach(drop => {
+                    addJiggleEntryListeners(drop); // Add listeners to enter jiggle mode
+                    drop.addEventListener('change', recalc); // Add the standard change listener
                 });
             }
 
-            if (lp_test_selected && !isExcluded) {
-                pl.style.display = '';
-                const postLP_odds = postCT_odds * combined_lp_lr;
 
-                // Clamp post-LP odds
-                const clamped_postLP_odds = Math.max(1e-10, Math.min(postLP_odds, 1e10));
-                postLP_prob_decimal = clamped_postLP_odds / (1 + clamped_postLP_odds);
+            // --- Listener to Exit Jiggle Mode ---
+            function handleExitInteraction(e) {
+                if (inJiggle && !e.target.closest('.segment-group')) {
+                    // console.log('Click detected outside segment group while in jiggle mode. Target:', e.target);
+                    const mainAppScrollable = document.querySelector('#app main');
+                    let isScrollbarClick = false;
 
-                plp.textContent = formatProbabilityText(postLP_prob_decimal); // Use helper
-                 // FPR display logic: 100 - PostLPProb (assuming TPR is PostLPProb)
-                const fpr_percent = 100 - (postLP_prob_decimal * 100);
-                plf.textContent = (typeof fpr_percent === 'number' && isFinite(fpr_percent)) ? fpr_percent.toFixed(1) + '%' : '--';
+                    // Check main app scrollbar
+                    if (mainAppScrollable && e.target === mainAppScrollable && e.clientX >= mainAppScrollable.getBoundingClientRect().right - 17) {
+                         isScrollbarClick = true;
+                         // console.log('Detected click potentially on main app scrollbar.');
+                    }
+                    // Check body scrollbar
+                    else if (e.target === document.documentElement && e.clientX >= document.documentElement.clientWidth) {
+                         isScrollbarClick = true;
+                         // console.log('Detected click potentially on body scrollbar.');
+                    }
 
-
-                finalPostProbForPlotting = postLP_prob_decimal; // Update plot value
-            } else {
-                pl.style.display = 'none';
-                plp.textContent = '--';
-                plf.textContent = '--';
-                // finalPostProbForPlotting remains postCT_prob_decimal (or min value if excluded)
+                    if (!isScrollbarClick) {
+                        // console.log('Exiting jiggle mode.');
+                        exitJiggleMode();
+                    } else {
+                         // console.log('Exit prevented due to potential scrollbar click.');
+                    }
+                }
             }
-
-            // 7. Final clamping and Nomogram draw
-            const axisMinProb = 0.0001;
-            const axisMaxProb = 0.9999;
-
-            // Clamp preP_decimal for drawing
-            const clampedPreP = Math.max(axisMinProb, Math.min(preP_decimal, axisMaxProb));
-
-            // Ensure finalPostProbForPlotting is valid before clamping
-            let finalPostProbValue = finalPostProbForPlotting;
-             if (typeof finalPostProbValue !== 'number' || !isFinite(finalPostProbValue)) {
-                 console.warn("finalPostProbForPlotting was invalid, defaulting to minimum.", finalPostProbForPlotting);
-                 finalPostProbValue = isExcluded ? axisMinProb : preP_decimal; // Default to pre-test if error? Or stick to min? Let's stick to min for safety.
-                 finalPostProbValue = axisMinProb;
-            }
-            const clampedPostP = Math.max(axisMinProb, Math.min(finalPostProbValue, axisMaxProb));
+            document.body.addEventListener('pointerdown', handleExitInteraction);
 
 
-            // Call drawNomogram only if it exists
-            if (typeof drawNomogram === 'function') {
-                 drawNomogram(clampedPreP, clampedPostP, isExcluded);
-            } else {
-                 console.error("drawNomogram function is not defined.");
-            }
+            // --- Initial Listener Attachment ---
+            attachInitialListeners(); // Attach listeners on load
 
-        } catch (error) {
-            console.error("------------------------------------");
-            console.error("Error during recalc:", error.message);
-            if(error.stack) console.error("Stack Trace:", error.stack);
-            console.error("------------------------------------");
-            // Display error to user
-             if(postO) postO.textContent = "Error!";
-             if(preO) preO.textContent = "Error!";
-             // Clear nomogram on error
-             const canvas = document.getElementById('nomogram-canvas');
-             if(canvas) {
-                 const ctx = canvas.getContext('2d');
-                 if (ctx) ctx.clearRect(0,0, canvas.width, canvas.height);
-             }
-        }
-      } // --- End of recalc ---
-
-      // --- Event Listeners ---
-      const debouncedRecalc = debounce(recalc, 150);
-
-      pr.addEventListener('input', () => {
-          pt.textContent = timeK();
-          recalc(); // Use non-debounced for immediate slider feedback
-      });
-
-      fS.forEach(s => s.addEventListener('change', recalc));
-      [oA, oD, oC, ...lpS].forEach(e => e && e.addEventListener('change', recalc));
-
-      // --- Resize Handling ---
-      const nomogramContainer = document.getElementById('nomogram');
-      if (nomogramContainer) {
-          const resizeObserver = new ResizeObserver(entries => {
-              if (entries[0].contentRect.width > 0 && entries[0].contentRect.height > 0) {
-                   debouncedRecalc(); // Use debounced for resize
-              }
-          });
-          resizeObserver.observe(nomogramContainer);
-      }
-      window.addEventListener('resize', debouncedRecalc); // Use debounced for resize
-
-      // --- Initial Calculation ---
-      setTimeout(recalc, 50);
-
-    }); // --- End of DOMContentLoaded ---
-  </script>
+        }); // --- End of DOMContentLoaded ---
+    </script>
 </body>
 </html>
