@@ -1,10 +1,11 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="utf-8"/>
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
-    <title>SAH Risk Calculator</title>
-    <style>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<title>SAH Risk Calculator</title>
+<style>
         /* Basic CSS Reset and Variables */
         :root { --app-width: 420px; --header-height: 3.5rem; }
         * { box-sizing: border-box; }
@@ -50,7 +51,16 @@
 
         /* Modal Styles */
         #info-modal { display: none; position: fixed; z-index: 300; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
-        #info-modal .modal-content { background-color: #fff; margin: 10% auto; padding: 1rem; border-radius: 4px; width: 90%; max-width: 400px; position: relative; }
+        #info-modal .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 1rem;
+            border-radius: 4px;
+            width: 75%;
+            max-width: 1000px;
+            min-width: 260px;
+            position: relative;
+        }
         #info-modal .close { position: absolute; top: 0.5rem; right: 1rem; color: #aaa; font-size: 1.5rem; font-weight: bold; cursor: pointer; }
         #info-modal .close:hover { color: #000; }
 
@@ -67,7 +77,19 @@
             text-align: center;
             font-size: 1.2rem;
             padding: 1rem;
-            z-index: 200; /* Ensure it's above everything */
+            z-index: 999; /* Increased z-index to ensure it's above everything */
+            opacity: 0.98; /* Slightly transparent for better visibility */
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.1); /* Inner shadow for visual emphasis */
+        }
+        
+        #landscape-warning p {
+            max-width: 80%;
+            margin: 0 auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #2a4a7b; /* Match header color */
         }
 
         /* Layout Wrapper */
@@ -200,11 +222,19 @@
         /* --- Prevent Landscape on Smartphones --- */
         /* --- Prevent Landscape on Smartphones (using JS class) --- */
         body.is-phone-landscape #wrapper,
-        body.is-phone-landscape header {
-            display: none; /* Hide main content and header */
+        body.is-phone-landscape header,
+        body.is-phone-landscape .modal {
+            display: none !important; /* Hide all content and modals */
         }
         body.is-phone-landscape #landscape-warning {
-            display: flex; /* Show the warning message */
+            display: flex !important; /* Force show the warning message */
+        }
+        /* Prevent scrolling when in landscape warning mode */
+        body.is-phone-landscape {
+            overflow: hidden !important;
+            position: fixed;
+            width: 100%;
+            height: 100%;
         }
 
 
@@ -233,76 +263,196 @@ header.responsive-header .info-icon {
   }
 }
 
+        @media (max-width: 767px) {
+            #info-modal .modal-content {
+                width: 95%;
+                max-width: 400px;
+            }
+        }
+    .table-row {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    @media (min-width: 768px) {
+      .table-row {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 1rem;
+        align-items: flex-start;
+      }
+      .table-row > div {
+        margin: 0 0.5rem; /* small side margin for each table */
+      }
+      .table-row table {
+        width: 47%;
+      }
+    }
+
+    /* --- Column widths & centring for CT‑sensitivity tables --- */
+    .table-row table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table-row table th,
+    .table-row table td {
+      text-align: center;
+      padding: 2px 4px;
+    }
+
+
+    /* Adjusted column proportions; ensure CI cells do not wrap */
+    .table-row table th:nth-child(1),
+    .table-row table td:nth-child(1) {
+      width: 20%;
+    }
+    .table-row table th:nth-child(2),
+    .table-row table td:nth-child(2) {
+      width: 30%;
+    }
+    .table-row table th:nth-child(3),
+    .table-row table td:nth-child(3) {
+      width: 50%;
+      white-space: nowrap;
+    }
+
+    /* --- Begin CT Sensitivity Modal sizing rules --- */
+    /* --- CT Sensitivity modal sizing & typography --- */
+    #ctSensitivityModal .modal-content{
+        width:clamp(260px,60vw,500px);   /* 60 % of viewport (~80 % of info window) */
+        max-width:600px;
+        min-width:280px;
+        font-size:0.9rem;                 /* slightly smaller base font */
+    }
+    /* --- End CT Sensitivity Modal sizing rules --- */
+    /* Reference list font size */
+    #info-modal .modal-content ol > li {
+      font-size: 0.8rem;
+    }
+    #ctSensitivityModal .modal-content h2{font-size:1.25em;}
+    #ctSensitivityModal .modal-content h3{font-size:1.05em;margin-top:1rem;}
+    #ctSensitivityModal .modal-content h4{font-size:1em;margin-top:.5rem;}
+
+@media (max-width: 500px) {
+  /* Narrow modal and stack tables vertically */
+  #ctSensitivityModal .modal-content {
+    width: clamp(260px, 90vw, 500px);
+    max-width: 500px;
+    max-height: 80vh;
+  }
+  .table-row {
+    flex-direction: column !important;
+  }
+  .table-row > div {
+    width: 100% !important;
+    margin: 0;
+  }
+  .table-row table {
+    width: 100% !important;
+  }
+}
+
+    /* CT Sensitivity button styling */
+    .ct-button-container {
+      display: flex;
+      justify-content: center;
+      margin: 1rem 0;
+    }
+    .ct-button {
+      font-size: 1.1rem;
+      padding: 0.75rem 1.5rem;
+      cursor: pointer;
+    }
     </style>
 </head>
 <body>
-    <div id="landscape-warning">
-        <p>Please rotate your device to portrait mode for the best experience.</p>
-    </div>
-    <header class="responsive-header">
-        <h1>SAH Risk Calculator</h1>
-        <div id="info-icon" title="Information">i</div>
-    </header>
-    <!-- Info Modal -->
-    <div id="info-modal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>About SAH Risk Calculator</h2>
-            <p>This calculator estimates the probability of subarachnoid haemorrhage based on clinical findings, CT timing, and lumbar puncture results.</p>
-        </div>
-    </div>
-    <div id="wrapper">
-        <div id="nomogram"><canvas height="1000" id="nomogram-canvas" width="1000"></canvas></div>
-        <div id="app">
-            <main>
-                <div class="controls"><strong>Pre-test Probability:</strong><span class="value" id="pretest-output-text">--</span></div>
-                <div class="controls"><strong>Headache to CT time:</strong><span class="value" id="presentation-time-text">&lt;6 hrs</span></div>
-                <div class="slider-container"><input id="presentation-range" max="5" min="0" step="1" type="range"/></div>
-                <div class="controls"><strong>Post-test Probability:</strong><span class="value" id="posttest-prob-text">--</span></div>
-
-                <fieldset><legend>Options</legend>
-                    <label>Aneurysmal SAH only <input checked="" id="asah-only" type="checkbox"/></label>
-                    <label>Adjust for delay to presentation <input checked="" id="adjust-delay" type="checkbox"/></label>
-                    <label>Maximally conservative <input id="max-conservative" type="checkbox"/></label>
-                </fieldset>
-
-                <div class="section-title">Clinical Findings...</div>
-
-                <fieldset><legend>History</legend>
-                    <label>Worst headache <select class="finding" data-key="Worst headache"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
-                    <label>Thunderclap <select class="finding" data-key="Thunderclap"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
-                    <label>Exertion at onset <select class="finding" data-key="Exertion at onset"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                    <label>Loss of consciousness <select class="finding" data-key="Loss of consciousness"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                    <label>Blurred vision <select class="finding" data-key="Blurred vision"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                    <label>Awoke from sleep <select class="finding" data-key="Awoke from sleep"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                    <label>Onset during intercourse <select class="finding" data-key="Onset during intercourse"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                    <label>Nausea <select class="finding" data-key="Nausea"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
-                </fieldset>
-
-                <fieldset><legend>Examination</legend>
-                    <label>Neck stiffness <select class="finding" data-key="Neck stiffness (subjective)"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
-                    <label>Meningism <select class="finding" data-key="Meningism"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                    <label>Vomiting <select class="finding" data-key="Vomiting"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                    <label>Unable to walk <select class="finding" data-key="Unable to walk"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                    <label>Altered mental status <select class="finding" data-key="Altered mental status"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                    <label>Focal neuro deficit <select class="finding" data-key="Focal neuro deficit"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
-                </fieldset>
-
-                <fieldset id="lp-section"><legend>Lumbar Puncture</legend>
-                    <label>UK Spectro xanthochromia <select id="lp-spectro" data-key="UK Spectro xanthochromia"><option selected="" value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-                    <label>CSF RBC &gt;1000 <select id="lp-rbc" data-key="CSF RBC >1000 (x10^6)"><option selected="" value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-                    <label>Visual xanthochromia <select id="lp-visual" data-key="Visual xanthochromia"><option selected="" value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
-                </fieldset>
-
-                <fieldset id="postlp-control" style="display:none; margin-bottom:1rem;"><legend>Post-LP Probability</legend>
-                    <div class="controls" style="margin:0; padding:0;">LP True Positive Rate:<span class="value" id="postlp-text">--</span></div>
-                    <div class="controls" style="margin:0; padding:0;">LP False Positive Rate:<span class="value" id="postlp-fpr-text">--</span></div>
-                </fieldset>
-            </main>
-        </div>
-    </div>
-
-    <script>
+<div id="landscape-warning">
+<p>Please rotate your device to portrait mode for the best experience.</p>
+</div>
+<header class="responsive-header">
+<h1>SAH Risk Calculator</h1>
+<div id="info-icon" title="Information">i</div>
+</header>
+<!-- Info Modal -->
+<div class="modal" id="info-modal">
+<div class="modal-content"><span class="close">×</span>
+<h2>Risk Interpretation in Context</h2>
+<p>This app estimates the probability of subarachnoid haemorrhage (SAH) based on clinical features, CT timing, and (if applicable) LP results. Three options help tailor your decision‑making:</p>
+<h3>Aneurysmal SAH only</h3>
+<p>When toggled on, this focuses only on aneurysmal SAH (aSAH), the subtype most likely to re‑bleed catastrophically and benefit from neurosurgical or endovascular treatment. Non‑aneurysmal SAH (e.g., perimesencephalic bleeds) are typically benign, self‑limiting, and unlikely to require intervention. This setting affects both the CT sensitivity values and the prior probability used in the model.</p>
+<h3>Adjust for delay to presentation</h3>
+<p>Not all patients arrive immediately after onset. The odds of SAH drop substantially with time. Approximately two‑thirds of SAH patients present within 6 hours of onset. Selecting this option adjusts the pre‑CT odds using data from Vincent et al. (2022), reflecting the decreasing likelihood of SAH with delayed arrival.</p>
+<h3>Maximally conservative</h3>
+<p>This toggles whether to use the lower bound of the 95 % CI for CT sensitivity across time windows (Vincent et al.). Useful when you’re risk‑averse, dealing with unclear clinical features, or managing medico‑legal risk. The default uses the point estimate of sensitivity; enabling this switch instead applies the worst‑case (maximal false‑negative) scenario.</p>
+<p>Together, these tools help refine the post‑CT probability. As Pouryahya and Haydon show, Bayesian reasoning can support rational decision‑making: a patient with a falling pre‑test probability, a high‑quality CT with excellent time sensitivity, and no high‑risk features may not benefit from LP — especially given the modest likelihood ratios and real‑world limitations of LPs (Carpenter et al.).</p>
+<div class="ct-button-container">
+  <button class="ct-button" onclick="document.getElementById('ctSensitivityModal').style.display='flex'">
+    📊 Headache Time-to-CT Sensitivities
+  </button>
+</div>
+<h3>References</h3>
+<ol>
+    <li>
+      Carpenter C., et al. Spontaneous Subarachnoid Hemorrhage: A Systematic Review and Meta-analysis Describing the Diagnostic Accuracy of History, Physical Examination, Imaging, and Lumbar Puncture With an Exploration of Test Thresholds. <strong>Acad Emerg Med.</strong> 2016 Sep;23(9):963-1003. <a href="https://pubmed.ncbi.nlm.nih.gov/27306497/" target="_blank">PubMed</a>
+    </li>
+    <li>
+      Pouryahya P., Haydon R., et al. Utility of lumbar puncture after a normal brain computed tomography scan in patients presenting to the emergency department with suspected subarachnoid haemorrhage: A new more rational approach? <strong>Emerg Med Australas.</strong> 2020 Oct;32(5):756-762. <a href="https://pubmed.ncbi.nlm.nih.gov/?term=10.1111%2F1742-6723.13502" target="_blank">PubMed</a>
+    </li>
+    <li>
+      Vincent A., et al. Sensitivity of modern multislice CT for subarachnoid haemorrhage at incremental timepoints after headache onset: a 10‑year analysis. <strong>Emerg Med J.</strong> 2022;39:810-817. <a href="https://pubmed.ncbi.nlm.nih.gov/34819306/" target="_blank">PubMed</a>
+    </li>
+</ol>
+</div>
+</div>
+<div id="wrapper">
+<div id="nomogram"><canvas height="1000" id="nomogram-canvas" width="1000"></canvas></div>
+<div id="app">
+<main>
+<div class="controls"><strong>Pre-test Probability:</strong><span class="value" id="pretest-output-text">--</span></div>
+<div class="controls"><strong>Headache to CT time:</strong><span class="value" id="presentation-time-text">&lt;6 hrs</span></div>
+<div class="slider-container"><input id="presentation-range" max="5" min="0" step="1" type="range"/></div>
+<div class="controls"><strong>Post-test Probability:</strong><span class="value" id="posttest-prob-text">--</span></div>
+<fieldset><legend>Options</legend>
+<label title="Restricts analysis to aneurysmal bleeds which often require intervention.">Aneurysmal SAH only <input checked="" id="asah-only" type="checkbox"/></label>
+<label title="Reduces pre-test odds if patient presents late.">Adjust for delay to presentation <input checked="" id="adjust-delay" type="checkbox"/></label>
+<label title="Uses the worst‑case CT sensitivity figures.">Maximally conservative <input id="max-conservative" type="checkbox"/></label>
+</fieldset>
+<div class="section-title">Clinical Findings...</div>
+<fieldset><legend>History</legend>
+<label>Worst headache <select class="finding" data-key="Worst headache"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
+<label>Thunderclap <select class="finding" data-key="Thunderclap"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
+<label>Exertion at onset <select class="finding" data-key="Exertion at onset"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+<label>Loss of consciousness <select class="finding" data-key="Loss of consciousness"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+<label>Blurred vision <select class="finding" data-key="Blurred vision"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+<label>Awoke from sleep <select class="finding" data-key="Awoke from sleep"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+<label>Onset during intercourse <select class="finding" data-key="Onset during intercourse"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+<label>Nausea <select class="finding" data-key="Nausea"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
+</fieldset>
+<fieldset><legend>Examination</legend>
+<label>Neck stiffness <select class="finding" data-key="Neck stiffness (subjective)"><option value="">Unknown</option><option selected="" value="yes">Yes</option><option value="no">No</option></select></label>
+<label>Meningism <select class="finding" data-key="Meningism"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+<label>Vomiting <select class="finding" data-key="Vomiting"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+<label>Unable to walk <select class="finding" data-key="Unable to walk"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+<label>Altered mental status <select class="finding" data-key="Altered mental status"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+<label>Focal neuro deficit <select class="finding" data-key="Focal neuro deficit"><option value="">Unknown</option><option value="yes">Yes</option><option selected="" value="no">No</option></select></label>
+</fieldset>
+<fieldset id="lp-section"><legend>Lumbar Puncture</legend>
+<label>UK Spectro xanthochromia <select data-key="UK Spectro xanthochromia" id="lp-spectro"><option selected="" value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+<label>CSF RBC &gt;1000 <select data-key="CSF RBC &gt;1000 (x10^6)" id="lp-rbc"><option selected="" value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+<label>Visual xanthochromia <select data-key="Visual xanthochromia" id="lp-visual"><option selected="" value="na">NA</option><option value="positive">Positive</option><option value="negative">Negative</option></select></label>
+</fieldset>
+<fieldset id="postlp-control" style="display:none; margin-bottom:1rem;"><legend>Post-LP Probability</legend>
+<div class="controls" style="margin:0; padding:0;">LP True Positive Rate:<span class="value" id="postlp-text">--</span></div>
+<div class="controls" style="margin:0; padding:0;">LP False Positive Rate:<span class="value" id="postlp-fpr-text">--</span></div>
+</fieldset>
+</main>
+</div>
+</div>
+<script>
         // --- Nomogram Drawing Function ---
         // (No changes needed in this function)
         function drawNomogram(preProbDecimal, postProbDecimal, isExcluded) {
@@ -1099,37 +1249,68 @@ header.responsive-header .info-icon {
         }); // --- End of DOMContentLoaded ---
     </script>
 <script>
-    function checkOrientation() {
-        const isLandscape = window.matchMedia("(orientation: landscape)").matches;
-        const hasTouch = navigator.maxTouchPoints > 1;
-
-        if (isLandscape && hasTouch) {
-            const height = window.innerHeight;
-            const width = window.innerWidth;
-            const aspectRatio = width / height;
-
-            // Heuristic: Touch device, landscape, specific height range, and wide aspect ratio (likely phone)
-            // iPhone 16 Pro Max landscape viewport might be around 934x430 (aspect ratio ~2.17)
-            // iPad Mini landscape viewport might be around 1133x744 (aspect ratio ~1.52)
-            const isLikelyPhone = height < 480 && aspectRatio > 1.9; // Tighter thresholds
-
-            if (isLikelyPhone) {
-                document.body.classList.add('is-phone-landscape');
-            } else {
-                document.body.classList.remove('is-phone-landscape');
+    // Try to lock orientation to portrait on mobile devices
+    function attemptOrientationLock() {
+        // Check if the Screen Orientation API is supported
+        if (screen.orientation && screen.orientation.lock && navigator.maxTouchPoints > 1) {
+            // Only attempt to lock on narrow screens (likely mobile phones)
+            if (window.innerWidth <= 768) {
+                screen.orientation.lock('portrait').catch(error => {
+                    console.log('Orientation lock failed: ', error);
+                    // If locking fails, we'll rely on our warning message
+                });
             }
+        }
+    }
+
+    // More reliable orientation detection
+    function checkOrientation() {
+        const hasTouch = navigator.maxTouchPoints > 1;
+        let isLandscape = false;
+        
+        // Use multiple methods to detect landscape orientation for better reliability
+        if (window.matchMedia) {
+            isLandscape = window.matchMedia("(orientation: landscape)").matches;
+        }
+        
+        // Additional check using dimensions
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const aspectRatio = width / height;
+        
+        // Only apply to narrow devices (likely phones, not tablets)
+        const isNarrowDevice = Math.min(width, height) <= 768;
+        
+        // More reliable phone detection
+        const isLikelyPhone = hasTouch && isNarrowDevice && (
+            // Either detected as landscape by media query
+            (isLandscape) ||
+            // Or has landscape-like aspect ratio
+            (width > height && aspectRatio > 1.2)
+        );
+        
+        if (isLikelyPhone) {
+            document.body.classList.add('is-phone-landscape');
+            // Force scroll to top to ensure warning is visible
+            window.scrollTo(0, 0);
         } else {
-            // Not landscape or not touch device
             document.body.classList.remove('is-phone-landscape');
         }
     }
 
-    // Check on load
+    // Try to lock orientation on page load
+    attemptOrientationLock();
+    
+    // Check orientation on load
     checkOrientation();
 
-    // Check on resize (handles orientation changes)
+    // Check on various events for maximum reliability
     window.addEventListener('resize', checkOrientation);
-  window.addEventListener('orientationchange', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    window.addEventListener('scroll', checkOrientation);
+    
+    // Recheck periodically to catch edge cases
+    setInterval(checkOrientation, 1000);
 </script>
 <script>
         // Info icon and modal logic
@@ -1145,5 +1326,68 @@ header.responsive-header .info-icon {
             }
         });
     </script>
+
+<div class="modal" id="ctSensitivityModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.6);z-index:400;justify-content:center;align-items:center;">
+<div class="modal-content" style="background:#fff;padding:1rem;max-width:90vw;max-height:95vh;min-height:70vh;overflow:auto;border-radius:8px;position:relative;">
+<span class="close" onclick="document.getElementById('ctSensitivityModal').style.display='none'" style="position:absolute;top:.5rem;right:.8rem;font-size:1.4rem;font-weight:bold;cursor:pointer;">×</span>
+<h2>CT Sensitivity by Time (Vincent et al., 2022)</h2>
+
+<h3>Primary analysis – maximising false‑negative rates</h3>
+<div class="table-row primary-row">
+  <div>
+    <h4>Aneurysmal SAH</h4>
+    <table border="1" cellpadding="4" cellspacing="0">
+    <tr><th>Time</th><th>Sensitivity</th><th>95 % CI</th></tr>
+    <tr><td>6 h</td><td>100 %</td><td>98.0 – 100</td></tr>
+    <tr><td>12 h</td><td>100 %</td><td>98.2 – 100</td></tr>
+    <tr><td>24 h</td><td>100 %</td><td>98.3 – 100</td></tr>
+    <tr><td>48 h</td><td>99.6 %</td><td>97.6 – 100</td></tr>
+    <tr><td>72 h</td><td>99.6 %</td><td>97.6 – 100</td></tr>
+    <tr><td>96 h</td><td>98.7 %</td><td>96.4 – 99.7</td></tr>
+    </table>
+  </div>
+  <div>
+    <h4>All‑cause SAH</h4>
+    <table border="1" cellpadding="4" cellspacing="0">
+    <tr><th>Time</th><th>Sensitivity</th><th>95 % CI</th></tr>
+    <tr><td>6 h</td><td>100 %</td><td>98.3 – 100</td></tr>
+    <tr><td>12 h</td><td>99.2 %</td><td>97.2 – 99.9</td></tr>
+    <tr><td>24 h</td><td>99.3 %</td><td>97.5 – 99.9</td></tr>
+    <tr><td>48 h</td><td>99.0 %</td><td>97.1 – 99.8</td></tr>
+    <tr><td>72 h</td><td>99.0 %</td><td>97.2 – 99.8</td></tr>
+    <tr><td>96 h</td><td>97.8 %</td><td>95.5 – 99.1</td></tr>
+    </table>
+  </div>
+</div>
+
+<h3>Secondary analysis – minimising false‑negative rates</h3>
+<div class="table-row secondary-row">
+  <div>
+    <h4>Aneurysmal SAH</h4>
+    <table border="1" cellpadding="4" cellspacing="0">
+    <tr><th>Time</th><th>Sensitivity</th><th>95 % CI</th></tr>
+    <tr><td>6 h</td><td>100 %</td><td>94.8 – 100</td></tr>
+    <tr><td>12 h</td><td>100 %</td><td>96.8 – 100</td></tr>
+    <tr><td>24 h</td><td>100 %</td><td>98.2 – 100</td></tr>
+    <tr><td>48 h</td><td>100 %</td><td>98.4 – 100</td></tr>
+    <tr><td>72 h</td><td>99.6 %</td><td>97.6 – 100</td></tr>
+    <tr><td>96 h</td><td>99.6 %</td><td>97.6 – 100</td></tr>
+    </table>
+  </div>
+  <div>
+    <h4>All‑cause SAH</h4>
+    <table border="1" cellpadding="4" cellspacing="0">
+    <tr><th>Time</th><th>Sensitivity</th><th>95 % CI</th></tr>
+    <tr><td>6 h</td><td>100 %</td><td>95.9 – 100</td></tr>
+    <tr><td>12 h</td><td>98.6 %</td><td>95.4 – 99.8</td></tr>
+    <tr><td>24 h</td><td>99.2 %</td><td>97.2 – 99.9</td></tr>
+    <tr><td>48 h</td><td>99.3 %</td><td>97.6 – 99.6</td></tr>
+    <tr><td>72 h</td><td>99.0 %</td><td>97.2 – 99.8</td></tr>
+    <tr><td>96 h</td><td>99.0 %</td><td>97.2 – 99.8</td></tr>
+    </table>
+  </div>
+</div>
+</div>
+</div>
 </body>
 </html>
